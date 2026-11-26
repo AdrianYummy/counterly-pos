@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StaffRequest;
+use App\Mail\WelcomeUserMail;
 use App\Models\ActivityLog;
 use App\Models\User;
 use App\Services\ImageService;
@@ -10,6 +11,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -55,7 +57,17 @@ class StaffController extends Controller
             throw $exception;
         }
 
-        return redirect()->route('staff.show', $staff)->with('success', 'Staff account created successfully.');
+        try {
+            Mail::to($staff->email)->send(new WelcomeUserMail($staff));
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return redirect()->route('staff.show', $staff)
+                ->with('success', 'Staff account created successfully.')
+                ->with('warning', 'The welcome email could not be sent. Check the mail settings and try the password-reset email if needed.');
+        }
+
+        return redirect()->route('staff.show', $staff)->with('success', 'Staff account created and the welcome email was sent.');
     }
 
     public function show(User $staff): View

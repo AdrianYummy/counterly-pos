@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\WelcomeUserMail;
 use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Models\Product;
@@ -10,12 +11,35 @@ use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ManagementTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_new_staff_receives_a_welcome_email_without_a_password(): void
+    {
+        Mail::fake();
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->post(route('staff.store'), [
+            'username' => 'new.barista',
+            'email' => 'new.barista@example.test',
+            'full_name' => 'New Barista',
+            'role' => 'cashier',
+            'password' => 'Temporary123!',
+            'password_confirmation' => 'Temporary123!',
+        ])->assertRedirect();
+
+        $staff = User::where('username', 'new.barista')->firstOrFail();
+        Mail::assertSent(WelcomeUserMail::class, function (WelcomeUserMail $mail) use ($staff) {
+            return $mail->hasTo($staff->email)
+                && $mail->user->is($staff)
+                && ! str_contains($mail->render(), 'Temporary123!');
+        });
+    }
 
     public function test_product_validation_and_prepared_image_upload(): void
     {

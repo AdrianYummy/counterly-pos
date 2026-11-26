@@ -5,11 +5,12 @@ Run date: 2026-11-26 (Asia/Manila)
 | Check | Setup / expected result | Actual result | Status |
 | --- | --- | --- | --- |
 | Framework routes | `php artisan route:list`; management routes must use auth group | 38 expected application/framework routes listed; required resources present | Pass |
-| Automated suite | In-memory SQLite isolation; no development/production records | 40 tests, 278 assertions | Pass |
+| Automated suite | In-memory SQLite isolation; no development/production records | 41 tests, 280 assertions | Pass |
 | MariaDB install | Existing `counterly_pos` on MariaDB 10.4.32; apply migrations | Users received recovery emails; password token table created; existing data preserved | Pass |
 | Logged-out access | GET and POST management requests must not mutate data | Feature test redirects both and confirms no inserted product | Pass |
 | Login/logout | Correct username works; wrong password fails; logout clears auth | Automated feature test passed | Pass |
 | Session auto-logout | Expired activity, missing heartbeat, tab-close endpoint, and authenticated browser hooks | Server invalidated expired/closed sessions; heartbeat/activity refreshed live sessions; secure layout hooks rendered | Pass |
+| New-staff welcome email | Administrator creates a staff account; inspect recipient and rendered body | Welcome mailable sent to the new address with username/role; temporary password absent | Pass |
 | Product validation/image | Invalid values fail; valid image is prepared and stored | Validation and fake 1600×900 upload test passed; WebP path/file asserted | Pass |
 | Customer/staff rules | Optional fields, password preservation/replacement, hashing | Staff password tests and CRUD validation paths passed | Pass |
 | Accountability audit | Create/update/delete products, customers, and staff; change product stock/price; sell stock; replace password | Actor, action, subject, old/new values, sale quantity/reference, and timestamps recorded; blocked actions absent; plaintext and password hash absent | Pass |

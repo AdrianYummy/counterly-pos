@@ -15,6 +15,7 @@ CaféFlow is a complete Laravel point-of-sale project for IT0049, designed for a
 
 - Username/password staff login, throttled failures, session regeneration, POST logout, browser-close/reload protection, 15-minute inactivity logout, and authentication on every management route
 - Secure email-based password recovery with expiring, throttled, single-use reset tokens and non-enumerating responses
+- Branded welcome email for newly created staff accounts, with no password or password hash included
 - Live dashboard counts, Asia/Manila daily sales total, recent sales, low-stock list, and field-level accountability for product, stock, sale-driven stock, customer, and staff changes
 - Role-based access with administrator and cashier accounts; administrator-only staff management, inventory changes, and customer deletion are enforced by middleware
 - Product, customer, staff, transaction, and accountability lists limited to 10 records per page with numbered pagination
@@ -137,7 +138,7 @@ composer check-platform-reqs
 npm run build
 ```
 
-The latest local run passed **40 tests / 278 assertions**, the Vite production build, Composer platform checks, MariaDB migrations/seeders, and authenticated HTTP smoke checks. See [docs/TESTING.md](docs/TESTING.md) for executed versus pending checks.
+The latest local run passed **41 tests / 280 assertions**, the Vite production build, Composer platform checks, MariaDB migrations/seeders, and authenticated HTTP smoke checks. See [docs/TESTING.md](docs/TESTING.md) for executed versus pending checks.
 
 Additional guides:
 
