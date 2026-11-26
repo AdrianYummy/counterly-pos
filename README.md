@@ -16,7 +16,7 @@ CaféFlow is a complete Laravel point-of-sale project for IT0049, designed for a
 - Username/password staff login, throttled failures, session regeneration, POST logout, refresh-safe tab-close protection, 15-minute inactivity logout, and authentication on every management route
 - Secure email-based password recovery with expiring, throttled, single-use reset tokens and non-enumerating responses
 - Branded welcome email for newly created staff accounts, with no password or password hash included
-- Live dashboard counts, Asia/Manila daily sales total, recent sales, low-stock list, and field-level accountability for product, stock, sale-driven stock, customer, and staff changes
+- Live dashboard counts, Asia/Manila daily sales totals, responsive seven-day revenue and top-product charts, recent sales, low-stock list, and field-level accountability for product, stock, sale-driven stock, customer, and staff changes
 - Role-based access with administrator and cashier accounts; administrator-only staff management, inventory changes, and customer deletion are enforced by middleware
 - Product, customer, staff, transaction, and accountability lists limited to 10 records per page with numbered pagination
 - Case-insensitive duplicate prevention for product names, staff full names, and customer names/emails, backed by database unique indexes

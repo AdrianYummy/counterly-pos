@@ -14,6 +14,7 @@ Run date: 2026-11-26 (Asia/Manila)
 | Product validation/image | Invalid values fail; valid image is prepared and stored | Validation and fake 1600×900 upload test passed; WebP path/file asserted | Pass |
 | Customer/staff rules | Optional fields, password preservation/replacement, hashing | Staff password tests and CRUD validation paths passed | Pass |
 | Accountability audit | Create/update/delete products, customers, and staff; change product stock/price; sell stock; replace password | Actor, action, subject, old/new values, sale quantity/reference, and timestamps recorded; blocked actions absent; plaintext and password hash absent | Pass |
+| Dashboard analytics | Create sale lines across multiple Manila dates, including two lines sharing one transaction | Seven-day revenue grouped by local date; grouped checkout counted once; top products ranked by units | Pass |
 | List pagination | Create 12 products, customers, staff, transactions, and audit records | Page 1 returned 10 records with a page 2 button; page 2 returned the remaining 2 | Pass |
 | Duplicate names | Submit product/staff/customer names and customer emails with different case/repeated spaces; attempt exact direct duplicates | Form requests rejected equivalent names/emails; unique database indexes rejected exact race-condition duplicates | Pass |
 | Role enforcement | Cashier directly requests staff/product-write/customer-delete routes | Every prohibited request returned HTTP 403 with no mutation | Pass |

@@ -8,11 +8,13 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class ManagementTest extends TestCase
@@ -219,6 +221,52 @@ class ManagementTest extends TestCase
             ->assertSee('Accountability Admin')
             ->assertSee('Stock Quantity')
             ->assertSee('deleted');
+    }
+
+    public function test_dashboard_shows_seven_day_sales_analytics_and_groups_checkout_lines(): void
+    {
+        $now = CarbonImmutable::parse('2026-11-27 12:00:00', 'Asia/Manila');
+        $this->travelTo($now);
+        $admin = User::factory()->create(['role' => 'admin']);
+        $coffee = Product::create(['name' => 'Analytics Coffee', 'price' => '100.00', 'stock_quantity' => 20]);
+        $pastry = Product::create(['name' => 'Analytics Pastry', 'price' => '50.00', 'stock_quantity' => 20]);
+        $todayTransaction = (string) Str::uuid();
+
+        Sale::forceCreate([
+            'transaction_id' => $todayTransaction,
+            'product_id' => $coffee->id,
+            'sold_by' => $admin->id,
+            'quantity' => 2,
+            'total_price' => '200.00',
+            'created_at' => $now->utc(),
+        ]);
+        Sale::forceCreate([
+            'transaction_id' => $todayTransaction,
+            'product_id' => $pastry->id,
+            'sold_by' => $admin->id,
+            'quantity' => 1,
+            'total_price' => '50.00',
+            'created_at' => $now->utc(),
+        ]);
+        Sale::forceCreate([
+            'transaction_id' => (string) Str::uuid(),
+            'product_id' => $coffee->id,
+            'sold_by' => $admin->id,
+            'quantity' => 1,
+            'total_price' => '100.00',
+            'created_at' => $now->subDays(2)->utc(),
+        ]);
+
+        $this->actingAs($admin)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Sales trend')
+            ->assertSee('Top products')
+            ->assertSee('Analytics Coffee')
+            ->assertViewHas('todaySales', 250.0)
+            ->assertViewHas('todayTransactionCount', 1)
+            ->assertViewHas('sevenDayRevenue', 350.0)
+            ->assertViewHas('salesTrend', fn ($trend) => $trend->last()['revenue'] === 250.0 && $trend->last()['transactions'] === 1)
+            ->assertViewHas('topProducts', fn ($products) => $products->first()['name'] === 'Analytics Coffee' && $products->first()['units'] === 3);
     }
 
     public function test_image_editors_appear_before_product_and_staff_fields(): void

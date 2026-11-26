@@ -2,9 +2,50 @@
     <div class="page-actions"><div><p class="muted">Operational summary for {{ now(config('counterly.display_timezone'))->format('F j, Y') }}.</p></div><div class="button-row"><a class="button secondary" href="{{ route('products.create') }}"><x-icon name="plus"/>Add Product</a><a class="button primary" href="{{ route('sales.create') }}"><x-icon name="cart"/>Open Point of Sale</a></div></div>
     <section class="stat-grid" aria-label="Today's business summary">
         <article class="stat-card tone-green"><span>Sales today</span><strong>₱{{ number_format((float) $todaySales, 2) }}</strong><a href="{{ route('sales.index', ['date_from' => now(config('counterly.display_timezone'))->format('Y-m-d'), 'date_to' => now(config('counterly.display_timezone'))->format('Y-m-d')]) }}">View today’s transactions</a></article>
-        <article class="stat-card tone-gold"><span>Transactions today</span><strong>{{ number_format($todayTransactionCount) }}</strong><small>Completed sale records</small></article>
+        <article class="stat-card tone-gold"><span>Transactions today</span><strong>{{ number_format($todayTransactionCount) }}</strong><small>Completed checkouts</small></article>
         <article class="stat-card tone-coral"><span>Low-stock products</span><strong>{{ number_format($lowStockCount) }}</strong><a href="{{ route('products.index') }}">Review inventory</a></article>
         <article class="stat-card tone-blue"><span>Active records</span><strong>{{ number_format($productCount) }}</strong><small>{{ number_format($customerCount) }} customers · {{ number_format($staffCount) }} staff</small></article>
+    </section>
+    <section class="analytics-grid" aria-label="Sales analytics">
+        <article class="panel analytics-card sales-trend-card">
+            <div class="panel-head analytics-head">
+                <div><p class="eyebrow">Seven-day performance</p><h2>Sales trend</h2><p>Daily revenue in Philippine pesos.</p></div>
+                <div class="analytics-total"><span>7-day revenue</span><strong>₱{{ number_format((float) $sevenDayRevenue, 2) }}</strong><small>{{ number_format($sevenDayTransactions) }} {{ Illuminate\Support\Str::plural('transaction', $sevenDayTransactions) }}</small></div>
+            </div>
+            <div class="sales-chart" role="img" aria-label="Seven-day sales revenue bar chart">
+                @foreach($salesTrend as $day)
+                    @php
+                        $barHeight = $day['revenue'] > 0 ? max(6, ($day['revenue'] / $salesTrendMax) * 100) : 0;
+                    @endphp
+                    <div class="sales-chart-column" tabindex="0" aria-label="{{ $day['label'] }}: ₱{{ number_format($day['revenue'], 2) }}, {{ $day['transactions'] }} transactions, {{ $day['units'] }} units">
+                        <div class="chart-tooltip"><strong>₱{{ number_format($day['revenue'], 2) }}</strong><span>{{ $day['transactions'] }} {{ Illuminate\Support\Str::plural('checkout', $day['transactions']) }} · {{ $day['units'] }} units</span></div>
+                        <div class="sales-bar-track"><span class="sales-bar" style="--bar-height: {{ number_format($barHeight, 2, '.', '') }}%"></span></div>
+                        <div class="sales-chart-label"><strong>{{ $day['day'] }}</strong><span>{{ $day['label'] }}</span></div>
+                    </div>
+                @endforeach
+            </div>
+            <a class="analytics-link" href="{{ route('sales.index', ['date_from' => $salesTrend->first()['date'], 'date_to' => $salesTrend->last()['date']]) }}">View seven-day transactions →</a>
+        </article>
+
+        <article class="panel analytics-card top-products-card">
+            <div class="panel-head analytics-head"><div><p class="eyebrow">Customer favorites</p><h2>Top products</h2><p>Ranked by units sold this week.</p></div></div>
+            @if($topProducts->isEmpty())
+                <div class="empty-state compact"><div class="empty-icon"><x-icon name="chart"/></div><h3>No sales data yet</h3><p>Top products will appear after checkout.</p></div>
+            @else
+                <ol class="product-chart">
+                    @foreach($topProducts as $index => $product)
+                        <li>
+                            <span class="product-rank">{{ $index + 1 }}</span>
+                            <div class="product-chart-main">
+                                <div><a href="{{ route('sales.index', ['product_id' => $product['public_id']]) }}">{{ $product['name'] }}</a><strong>{{ number_format($product['units']) }} sold</strong></div>
+                                <div class="product-bar-track"><span style="--bar-width: {{ number_format(($product['units'] / $topProductMax) * 100, 2, '.', '') }}%"></span></div>
+                                <small>₱{{ number_format($product['revenue'], 2) }} revenue</small>
+                            </div>
+                        </li>
+                    @endforeach
+                </ol>
+            @endif
+        </article>
     </section>
     <div class="dashboard-grid">
         <section class="panel">

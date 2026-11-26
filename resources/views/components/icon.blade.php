@@ -22,6 +22,7 @@
         @case('trash')<path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 11v5M14 11v5"/>@break
         @case('mail')<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>@break
         @case('history')<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>@break
+        @case('chart')<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>@break
         @default<circle cx="12" cy="12" r="9"/>@break
     @endswitch
 </svg>
