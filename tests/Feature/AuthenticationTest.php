@@ -26,7 +26,7 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
 
         $this->post('/login', ['username' => 'alex', 'password' => 'Secret123!'])
-            ->assertRedirect('/dashboard');
+            ->assertRedirect('/sales/create');
         $this->assertAuthenticatedAs($user);
 
         $this->post('/logout')->assertRedirect('/login');
@@ -37,5 +37,18 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create(['password' => 'Secret123!']);
         $this->get('/login')->assertOk()->assertDontSee($user->password, false);
+    }
+
+    public function test_administrator_and_cashier_land_on_role_appropriate_workspaces(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'password' => 'Secret123!']);
+
+        $this->post('/login', ['username' => $admin->username, 'password' => 'Secret123!'])
+            ->assertRedirect('/dashboard');
+
+        $this->post('/logout');
+        $cashier = User::factory()->create(['role' => 'cashier', 'password' => 'Secret123!']);
+        $this->post('/login', ['username' => $cashier->username, 'password' => 'Secret123!'])
+            ->assertRedirect('/sales/create');
     }
 }

@@ -16,13 +16,19 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $password = config('counterly.demo_password');
-        if (! is_string($password) || strlen($password) < 8 || strlen($password) > 72) {
-            throw new \RuntimeException('Set DEMO_STAFF_PASSWORD to an 8–72 character value before seeding.');
+        if (! is_string($password)
+            || strlen($password) < 10
+            || strlen($password) > 72
+            || ! preg_match('/[a-z]/', $password)
+            || ! preg_match('/[A-Z]/', $password)
+            || ! preg_match('/\d/', $password)
+            || ! preg_match('/[^A-Za-z0-9]/', $password)) {
+            throw new \RuntimeException('Set DEMO_STAFF_PASSWORD to a 10–72 character value containing uppercase, lowercase, number, and symbol characters before seeding.');
         }
 
         foreach ([
-            ['username' => 'admin', 'full_name' => 'Alex Rivera'],
-            ['username' => 'cashier', 'full_name' => 'Jamie Santos'],
+            ['username' => 'admin', 'email' => 'admin@counterly.test', 'full_name' => 'Alex Rivera', 'role' => 'admin'],
+            ['username' => 'cashier', 'email' => 'cashier@counterly.test', 'full_name' => 'Jamie Santos', 'role' => 'cashier'],
         ] as $staff) {
             User::updateOrCreate(['username' => $staff['username']], $staff + ['password' => Hash::make($password), 'avatar' => null]);
         }

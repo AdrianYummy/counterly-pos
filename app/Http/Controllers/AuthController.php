@@ -39,7 +39,7 @@ class AuthController extends Controller
         RateLimiter::clear($key);
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard'));
+        return redirect()->route($request->user()->isAdmin() ? 'dashboard' : 'sales.create');
     }
 
     public function destroy(Request $request): RedirectResponse

@@ -11,24 +11,11 @@
     <main class="login-shell">
         <section class="login-intro">
             <div class="brand inverse"><span>C</span><strong>Counterly</strong></div>
-            <p class="eyebrow">Smart stock. Clear sales.</p>
-            <h1>A focused point-of-sale workspace for everyday business.</h1>
-            <p>Manage inventory, customers, staff, and sales from one secure place.</p>
+            <div class="login-message"><p class="eyebrow">Retail workspace</p><h1>Fast sales.<br>Clear inventory.</h1><p>A practical workspace for checkout, stock control, customers, and transaction history.</p></div>
+            <small>Authorized staff access only</small>
         </section>
         <section class="login-panel">
-            <div class="login-card">
-                <p class="eyebrow">Welcome back</p>
-                <h2>Staff sign in</h2>
-                <p class="muted">Use your Counterly staff credentials.</p>
-                @if(session('success'))<div class="alert success" role="status">{{ session('success') }}</div>@endif
-                @if($errors->any())<div class="alert danger" role="alert">{{ $errors->first() }}</div>@endif
-                <form method="POST" action="{{ route('login.store') }}" class="form-stack">
-                    @csrf
-                    <label>Username<input type="text" name="username" value="{{ old('username') }}" maxlength="50" autocomplete="username" autofocus required></label>
-                    <label>Password<input type="password" name="password" maxlength="72" autocomplete="current-password" required></label>
-                    <button class="button primary wide" type="submit">Sign in</button>
-                </form>
-            </div>
+            <div class="login-card">{{ $slot }}</div>
         </section>
     </main>
 </body>

@@ -14,18 +14,23 @@ Counterly is a complete Laravel point-of-sale project for IT0049. It manages pro
 ## Implemented features
 
 - Username/password staff login, throttled failures, session regeneration, POST logout, and authentication on every management route
+- Secure email-based password recovery with expiring, throttled, single-use reset tokens and non-enumerating responses
 - Live dashboard counts, Asia/Manila daily sales total, recent sales, and low-stock list
+- Role-based access with administrator and cashier accounts; administrator-only staff management, inventory changes, and customer deletion are enforced by middleware
 - Product, customer, and staff CRUD with validation, search, pagination, detail pages, and protected deletion
 - GD-backed image validation, resize, WebP re-encoding, generated filenames, replacement cleanup, and local placeholders
 - Record Sale flow with an optional customer, server-selected staff identity, exact centavo totals, database transaction, `lockForUpdate()`, stock deduction, insufficient-stock rejection, and overflow protection
 - Read-only sales history with search, product/staff/date filters and transaction details
+- Optional customer receipt email after checkout, receipt resend from transaction details, and a print-ready receipt
 - Stale-stock detection so an open product edit cannot undo a newer sale
 - Restrictive foreign keys; transaction history blocks deletion of referenced products, customers, or staff
-- Current-account and final-staff safeguards
+- Current-account, final-staff, and final-administrator safeguards
+- UUID public references in routes and forms so internal numeric database keys are not exposed in HTTP addresses
+- One-way password hashing, strong new-password rules, login throttling, CSRF protection, session regeneration, escaped output, and browser security headers
 - Seed data: 10 products, 5 fictional customers, and 2 staff accounts
 - Vite source and committed production assets for hosts without Node.js
 
-The required model is intentionally one product type per sale row. Carts, payment gateways, VAT, discounts, refunds, barcode scanning, roles, public registration, and password-reset email are outside this assignment's baseline.
+The required model is intentionally one product type per sale row. Carts, payment gateways, VAT, discounts, refunds, barcode scanning, and public registration remain outside this assignment's baseline.
 
 ## Tested environment
 
@@ -72,7 +77,22 @@ Required PHP extensions include Ctype, cURL, DOM, Fileinfo, Filter, GD, Hash, Mb
    DEMO_STAFF_PASSWORD=YourPrivateDemoPassword
    ```
 
-6. Install/build assets, migrate, seed, and expose prepared uploads:
+   New passwords require 10–72 characters with uppercase, lowercase, number, and symbol characters.
+
+6. Email is safe to test locally with `MAIL_MAILER=log`; messages appear in `storage/logs/laravel.log`. For real inbox delivery, configure SMTP credentials in `.env`:
+
+   ```dotenv
+   MAIL_MAILER=smtp
+   MAIL_HOST=your-smtp-host
+   MAIL_PORT=587
+   MAIL_USERNAME=your-smtp-username
+   MAIL_PASSWORD=your-private-smtp-password
+   MAIL_SCHEME=null
+   MAIL_FROM_ADDRESS=noreply@your-domain.example
+   MAIL_FROM_NAME="Counterly POS"
+   ```
+
+7. Install/build assets, migrate, seed, and expose prepared uploads:
 
    ```powershell
    npm ci
@@ -82,7 +102,7 @@ Required PHP extensions include Ctype, cURL, DOM, Fileinfo, Filter, GD, Hash, Mb
    php artisan storage:link
    ```
 
-7. Start the application:
+8. Start the application:
 
    ```powershell
    php artisan serve
@@ -90,11 +110,13 @@ Required PHP extensions include Ctype, cURL, DOM, Fileinfo, Filter, GD, Hash, Mb
 
    Open `http://127.0.0.1:8000`. For source asset hot reload, run `npm run dev` in a second terminal. A production build is already included under `public/build`.
 
-Seeded usernames are `admin` and `cashier`; both use the password you set in `DEMO_STAFF_PASSWORD`. Change assessor credentials through a private submission channel—never commit a real password. The seeder uses stable usernames/emails and can be rerun without silently duplicating demo records, but it must not be run automatically on production redeployments.
+Seeded usernames are `admin` and `cashier`, with placeholder recovery addresses `admin@counterly.test` and `cashier@counterly.test`. Both use the password set in `DEMO_STAFF_PASSWORD`. Replace the placeholder addresses in **User Accounts** before testing real password delivery. Change assessor credentials through a private submission channel—never commit a real password. The seeder uses stable usernames/emails and can be rerun without silently duplicating demo records, but it must not be run automatically on production redeployments.
 
 ## Design and security notes
 
-The schema deliberately uses signed `INT` identifiers, `DECIMAL(10,2)` money, created-at-only timestamps, nullable `sales.customer_id`, and restrictive foreign keys. Passwords use Laravel's configured one-way hash. Models expose explicit fillable fields; controllers never accept client totals, seller IDs, or timestamps. Blade escapes user content, Form Requests validate writes, and Laravel CSRF middleware remains enabled.
+The schema keeps signed `INT` primary/foreign keys internally for efficient joins and adds unique UUID public identifiers for URLs and submitted record references. It uses `DECIMAL(10,2)` money, created-at-only timestamps, nullable `sales.customer_id`, and restrictive foreign keys. Hiding internal IDs is defense-in-depth, not authorization: admin middleware independently rejects prohibited cashier requests with HTTP 403.
+
+Passwords use Laravel's configured one-way hash and are hidden from serialization. New staff passwords require 10–72 characters with uppercase, lowercase, number, and symbol characters. Models expose explicit fillable fields; controllers never accept client totals, seller IDs, or timestamps. Blade escapes user content, Form Requests validate writes, Laravel CSRF middleware remains enabled, and login success regenerates the session ID.
 
 Uploaded files are limited to valid JPG, PNG, or WebP images up to 4 MB and 6000×6000 pixels. The application decodes them with GD, scales within 1200×1200 (avatars 600×600), re-encodes to WebP, and stores only relative paths under `storage/app/public/products` or `storage/app/public/avatars`. `public/storage` must remain linked to `storage/app/public`; production storage must persist across releases.
 
@@ -109,7 +131,7 @@ composer check-platform-reqs
 npm run build
 ```
 
-The latest local run passed **12 tests / 59 assertions**, the Vite production build, Composer platform checks, MariaDB migrations/seeders, and authenticated HTTP smoke checks. See [docs/TESTING.md](docs/TESTING.md) for executed versus pending checks.
+The latest local run passed **25 tests / 134 assertions**, the Vite production build, Composer platform checks, MariaDB migrations/seeders, and authenticated HTTP smoke checks. See [docs/TESTING.md](docs/TESTING.md) for executed versus pending checks.
 
 Additional guides:
 

@@ -9,6 +9,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class StaffController extends Controller
@@ -20,7 +21,9 @@ class StaffController extends Controller
         $data = $request->validate(['search' => ['nullable', 'string', 'max:100']]);
         $search = trim($data['search'] ?? '');
         $staffMembers = User::query()->when($search, fn ($query) => $query
-            ->where(fn ($inner) => $inner->where('username', 'like', '%'.$search.'%')->orWhere('full_name', 'like', '%'.$search.'%')))
+            ->where(fn ($inner) => $inner->where('username', 'like', '%'.$search.'%')
+                ->orWhere('full_name', 'like', '%'.$search.'%')
+                ->orWhere('email', 'like', '%'.$search.'%')))
             ->orderBy('id')->paginate(10)->withQueryString();
 
         return view('staff.index', compact('staffMembers', 'search'));
@@ -33,7 +36,7 @@ class StaffController extends Controller
 
     public function store(StaffRequest $request): RedirectResponse
     {
-        $data = $request->safe()->only(['username', 'full_name', 'password']);
+        $data = $request->safe()->only(['username', 'email', 'full_name', 'role', 'password']);
         if ($request->hasFile('avatar')) {
             $data['avatar'] = $this->images->store($request->file('avatar'), 'avatars', 600, 600);
         }
@@ -57,7 +60,7 @@ class StaffController extends Controller
     public function update(StaffRequest $request, User $staff): RedirectResponse
     {
         $newAvatar = $request->hasFile('avatar') ? $this->images->store($request->file('avatar'), 'avatars', 600, 600) : null;
-        $data = $request->safe()->only(['username', 'full_name']);
+        $data = $request->safe()->only(['username', 'email', 'full_name', 'role']);
         if (filled($request->validated('password'))) {
             $data['password'] = $request->validated('password');
         }
@@ -66,7 +69,15 @@ class StaffController extends Controller
         }
         $oldAvatar = $staff->avatar;
         try {
-            $staff->update($data);
+            DB::transaction(function () use ($staff, $data) {
+                $staffMembers = User::query()->lockForUpdate()->get(['id', 'role']);
+                /** @var User $locked */
+                $locked = $staffMembers->firstWhere('id', $staff->id) ?? abort(404);
+                if ($locked->role === 'admin' && $data['role'] !== 'admin' && $staffMembers->where('role', 'admin')->count() <= 1) {
+                    throw ValidationException::withMessages(['role' => 'At least one administrator account must remain.']);
+                }
+                $locked->update($data);
+            });
         } catch (\Throwable $exception) {
             $this->images->delete($newAvatar);
             throw $exception;
@@ -89,6 +100,9 @@ class StaffController extends Controller
                 User::query()->lockForUpdate()->get(['id']);
                 if (User::count() <= 1) {
                     throw new \LogicException('The last staff account cannot be deleted.');
+                }
+                if ($staff->role === 'admin' && User::where('role', 'admin')->count() <= 1) {
+                    throw new \LogicException('The last administrator account cannot be deleted.');
                 }
                 if ($staff->sales()->exists()) {
                     throw new \DomainException('This staff account is used in sales history and cannot be deleted.');

@@ -5,7 +5,7 @@ Use a PHP host with PHP 8.2+, the Laravel extensions listed in the README, MySQL
 ## Production checklist
 
 1. Push the reviewed source and lockfiles to a private/public repository appropriate for the class submission.
-2. Set production environment values outside source control: `APP_ENV=production`, `APP_DEBUG=false`, the HTTPS `APP_URL`, a stable generated `APP_KEY`, database credentials, `SESSION_SECURE_COOKIE=true`, file sessions/cache, synchronous queue, and a private initial-account password if intentionally seeding a new installation.
+2. Set production environment values outside source control: `APP_ENV=production`, `APP_DEBUG=false`, the HTTPS `APP_URL`, a stable generated `APP_KEY`, database credentials, `SESSION_SECURE_COOKIE=true`, file sessions/cache, synchronous queue, SMTP credentials/from address, and a private initial-account password if intentionally seeding a new installation.
 3. Install/build the exact reviewed version:
 
    ```sh

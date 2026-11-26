@@ -4,13 +4,22 @@ Run date: 2026-11-26 (Asia/Manila)
 
 | Check | Setup / expected result | Actual result | Status |
 | --- | --- | --- | --- |
-| Framework routes | `php artisan route:list`; management routes must use auth group | 33 expected application/framework routes listed; required resources present | Pass |
-| Automated suite | In-memory SQLite isolation; no development/production records | 12 tests, 59 assertions | Pass |
-| MariaDB install | Empty `counterly_pos` on MariaDB 10.4.32; migrate and seed | Four domain tables migrated; 10 products, 5 customers, 2 staff seeded | Pass |
+| Framework routes | `php artisan route:list`; management routes must use auth group | 38 expected application/framework routes listed; required resources present | Pass |
+| Automated suite | In-memory SQLite isolation; no development/production records | 25 tests, 134 assertions | Pass |
+| MariaDB install | Existing `counterly_pos` on MariaDB 10.4.32; apply migrations | Users received recovery emails; password token table created; existing data preserved | Pass |
 | Logged-out access | GET and POST management requests must not mutate data | Feature test redirects both and confirms no inserted product | Pass |
 | Login/logout | Correct username works; wrong password fails; logout clears auth | Automated feature test passed | Pass |
 | Product validation/image | Invalid values fail; valid image is prepared and stored | Validation and fake 1600×900 upload test passed; WebP path/file asserted | Pass |
 | Customer/staff rules | Optional fields, password preservation/replacement, hashing | Staff password tests and CRUD validation paths passed | Pass |
+| Role enforcement | Cashier directly requests staff/product-write/customer-delete routes | Every prohibited request returned HTTP 403 with no mutation | Pass |
+| Public identifiers | Generated product/customer/staff/sale URLs use UUIDs; numeric URLs attempted | UUID route segments matched; every numeric route returned 404 | Pass |
+| Password storage | Create staff with a known password | Stored value differs from plaintext and passes one-way hash verification | Pass |
+| Final administrator | Attempt to demote/delete the only administrator | Both blocked; administrator role preserved | Pass |
+| Browser headers | Login response inspected | Clickjacking, MIME sniffing, referrer, opener, and permissions headers present | Pass |
+| Password recovery | Request link, open reset form, submit token and strong password | Notification sent, hash replaced, token consumed; unknown email remained undisclosed | Pass |
+| Customer receipt email | Named, walk-in, and resend paths with notification fake | Named customer notified; walk-in skipped; detail-page resend notified | Pass |
+| UI production build | `npm run build` after green design/POS redesign | Vite built current CSS and JavaScript into `public/build` | Pass |
+| Real SMTP inbox delivery | Valid provider credentials and real staff/customer addresses | No external SMTP credentials supplied; log mailer remains the safe local default | Pending |
 | Named sale/tampering | Stock 10, ₱25, qty 3; client seller/total ignored | Stored total ₱75, stock 7, authenticated seller | Pass |
 | Insufficient sale | Qty 8 with stock 7 must leave both tables unchanged | No sale; stock remained 7 | Pass |
 | Walk-in/exact stock | Null customer; selling all units reaches zero | Null persisted, history label shown, stock zero | Pass |

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 
 class CustomerRequest extends FormRequest
 {
@@ -15,7 +16,7 @@ class CustomerRequest extends FormRequest
     {
         $this->merge([
             'full_name' => trim((string) $this->input('full_name')),
-            'email' => trim((string) $this->input('email')),
+            'email' => Str::lower(trim((string) $this->input('email'))),
             'phone' => filled($this->input('phone')) ? trim((string) $this->input('phone')) : null,
         ]);
     }

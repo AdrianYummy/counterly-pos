@@ -14,9 +14,10 @@ class SaleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_id' => ['required', 'integer', 'exists:products,id'],
-            'customer_id' => ['nullable', 'integer', 'exists:customers,id'],
+            'product_id' => ['required', 'uuid', 'exists:products,public_id'],
+            'customer_id' => ['nullable', 'uuid', 'exists:customers,public_id'],
             'quantity' => ['required', 'integer', 'min:1', 'max:2147483647'],
+            'email_receipt' => ['nullable', 'boolean'],
         ];
     }
 }

@@ -6,7 +6,9 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
+use App\Notifications\SaleReceiptNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class SaleWorkflowTest extends TestCase
@@ -27,8 +29,8 @@ class SaleWorkflowTest extends TestCase
         $customer = Customer::create(['full_name' => 'Test Customer', 'email' => 'customer@example.test']);
 
         $this->actingAs($this->staff)->post('/sales', [
-            'product_id' => $product->id,
-            'customer_id' => $customer->id,
+            'product_id' => $product->public_id,
+            'customer_id' => $customer->public_id,
             'quantity' => 3,
             'total_price' => '0.01',
             'sold_by' => 999,
@@ -49,7 +51,7 @@ class SaleWorkflowTest extends TestCase
         $product = Product::create(['name' => 'Limited Item', 'price' => '25.00', 'stock_quantity' => 7]);
 
         $this->actingAs($this->staff)->post('/sales', [
-            'product_id' => $product->id,
+            'product_id' => $product->public_id,
             'quantity' => 8,
         ])->assertSessionHasErrors('quantity');
 
@@ -62,7 +64,7 @@ class SaleWorkflowTest extends TestCase
         $product = Product::create(['name' => 'Last Item', 'price' => '99.95', 'stock_quantity' => 5]);
 
         $this->actingAs($this->staff)->post('/sales', [
-            'product_id' => $product->id,
+            'product_id' => $product->public_id,
             'customer_id' => '',
             'quantity' => 5,
         ])->assertRedirect();
@@ -71,7 +73,7 @@ class SaleWorkflowTest extends TestCase
         $this->assertNull($sale->customer_id);
         $this->assertSame('499.75', $sale->total_price);
         $this->assertSame(0, $product->fresh()->stock_quantity);
-        $this->actingAs($this->staff)->get('/sales')->assertSee('Walk-in customer');
+        $this->actingAs($this->staff)->get('/sales')->assertSee('Walk-in Customer');
     }
 
     public function test_amount_overflow_is_rejected_without_stock_change(): void
@@ -79,7 +81,7 @@ class SaleWorkflowTest extends TestCase
         $product = Product::create(['name' => 'Expensive Item', 'price' => '99999999.99', 'stock_quantity' => 2]);
 
         $this->actingAs($this->staff)->post('/sales', [
-            'product_id' => $product->id,
+            'product_id' => $product->public_id,
             'quantity' => 2,
         ])->assertSessionHasErrors('quantity');
 
@@ -90,9 +92,63 @@ class SaleWorkflowTest extends TestCase
     public function test_historical_total_does_not_change_with_product_price(): void
     {
         $product = Product::create(['name' => 'Stable History', 'price' => '50.00', 'stock_quantity' => 5]);
-        $this->actingAs($this->staff)->post('/sales', ['product_id' => $product->id, 'quantity' => 2]);
+        $this->actingAs($this->staff)->post('/sales', ['product_id' => $product->public_id, 'quantity' => 2]);
         $product->update(['price' => '80.00']);
 
         $this->assertSame('100.00', Sale::firstOrFail()->fresh()->total_price);
+    }
+
+    public function test_named_customer_can_receive_a_sale_receipt_email(): void
+    {
+        Notification::fake();
+        $product = Product::create(['name' => 'Receipt Item', 'price' => '35.00', 'stock_quantity' => 3]);
+        $customer = Customer::create(['full_name' => 'Receipt Customer', 'email' => 'receipt@example.test']);
+
+        $this->actingAs($this->staff)->post('/sales', [
+            'product_id' => $product->public_id,
+            'customer_id' => $customer->public_id,
+            'quantity' => 1,
+            'email_receipt' => '1',
+        ])->assertRedirect();
+
+        Notification::assertSentTo($customer, SaleReceiptNotification::class, function (SaleReceiptNotification $notification) use ($customer) {
+            $mail = $notification->toMail($customer);
+            $this->assertStringContainsString('Counterly receipt', $mail->subject);
+
+            return true;
+        });
+    }
+
+    public function test_walk_in_sale_does_not_attempt_a_receipt_email(): void
+    {
+        Notification::fake();
+        $product = Product::create(['name' => 'Walk-in Item', 'price' => '35.00', 'stock_quantity' => 3]);
+
+        $this->actingAs($this->staff)->post('/sales', [
+            'product_id' => $product->public_id,
+            'quantity' => 1,
+            'email_receipt' => '1',
+        ])->assertRedirect();
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_receipt_email_can_be_resent_from_transaction_details(): void
+    {
+        Notification::fake();
+        $product = Product::create(['name' => 'Resend Item', 'price' => '35.00', 'stock_quantity' => 3]);
+        $customer = Customer::create(['full_name' => 'Resend Customer', 'email' => 'resend@example.test']);
+        $sale = Sale::create([
+            'product_id' => $product->id,
+            'customer_id' => $customer->id,
+            'sold_by' => $this->staff->id,
+            'quantity' => 1,
+            'total_price' => '35.00',
+        ]);
+
+        $this->actingAs($this->staff)->post(route('sales.email-receipt', $sale))
+            ->assertSessionHas('success');
+
+        Notification::assertSentTo($customer, SaleReceiptNotification::class);
     }
 }
