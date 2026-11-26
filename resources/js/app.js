@@ -24,15 +24,25 @@ document.querySelector('[data-sidebar-toggle]')?.addEventListener('click', () =>
 });
 
 const startLoading = () => document.body.classList.add('is-loading');
-window.addEventListener('pageshow', () => document.body.classList.remove('is-loading'));
+let intentionalNavigation = false;
+window.addEventListener('pageshow', () => {
+    intentionalNavigation = false;
+    document.body.classList.remove('is-loading');
+});
 document.addEventListener('click', (event) => {
     const link = event.target.closest('a[href]');
     if (!link || link.target === '_blank' || link.hasAttribute('download') || link.hasAttribute('data-bean-transition')) return;
     const url = new URL(link.href, window.location.href);
-    if (url.origin === window.location.origin && url.href !== window.location.href && !url.hash) startLoading();
+    if (url.origin === window.location.origin && url.href !== window.location.href && !url.hash) {
+        intentionalNavigation = true;
+        startLoading();
+    }
 });
 document.addEventListener('submit', (event) => {
-    if (!event.defaultPrevented && !event.target.matches('[data-confirm]') && event.target.checkValidity()) startLoading();
+    if (!event.defaultPrevented && !event.target.matches('[data-confirm]') && event.target.checkValidity()) {
+        intentionalNavigation = true;
+        startLoading();
+    }
 });
 
 const menuButton = document.querySelector('.menu-toggle');
@@ -56,12 +66,94 @@ document.querySelectorAll('form[data-confirm]').forEach((form) => {
 });
 confirmDialog?.addEventListener('close', () => {
     if (confirmDialog.returnValue === 'confirm' && pendingForm) {
+        intentionalNavigation = true;
         startLoading();
         pendingForm.submit();
     }
     if (confirmDialog.returnValue !== 'confirm') document.body.classList.remove('is-loading');
     pendingForm = null;
 });
+
+const sessionGuard = document.body.matches('[data-session-guard]') ? document.body : null;
+if (sessionGuard) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const heartbeatUrl = sessionGuard.dataset.sessionHeartbeatUrl;
+    const activityUrl = sessionGuard.dataset.sessionActivityUrl;
+    const closeUrl = sessionGuard.dataset.sessionCloseUrl;
+    const loginUrl = sessionGuard.dataset.sessionLoginUrl;
+    const idleLimit = Math.max(60, Number(sessionGuard.dataset.sessionIdleSeconds || 900)) * 1000;
+    let lastInteraction = Date.now();
+    let lastActivitySync = 0;
+    let closingSession = false;
+
+    const securePost = async (url) => {
+        const response = await fetch(url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            keepalive: true,
+            headers: {
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+        if (response.status === 401 || response.status === 419) {
+            window.location.replace(loginUrl);
+        }
+        return response;
+    };
+
+    const closeSession = () => securePost(closeUrl).catch(() => null);
+    const lockAndLeave = async () => {
+        if (closingSession) return;
+        closingSession = true;
+        document.documentElement.classList.add('session-restore-lock');
+        await Promise.race([
+            closeSession(),
+            new Promise((resolve) => window.setTimeout(resolve, 1800)),
+        ]);
+        window.location.replace(loginUrl);
+    };
+
+    if (document.documentElement.classList.contains('session-restore-lock')) {
+        lockAndLeave();
+    } else {
+        const recordActivity = () => {
+            lastInteraction = Date.now();
+            if (lastInteraction - lastActivitySync < 30000) return;
+            lastActivitySync = lastInteraction;
+            securePost(activityUrl).catch(() => null);
+        };
+        ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach((eventName) => {
+            window.addEventListener(eventName, recordActivity, { passive: true });
+        });
+        window.setInterval(() => {
+            if (Date.now() - lastInteraction >= idleLimit) {
+                lockAndLeave();
+                return;
+            }
+            securePost(heartbeatUrl).catch(() => null);
+        }, 45000);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') securePost(heartbeatUrl).catch(() => null);
+        });
+    }
+
+    window.addEventListener('pagehide', () => {
+        if (intentionalNavigation || closingSession) return;
+        closingSession = true;
+        const payload = new FormData();
+        payload.append('_token', csrfToken);
+        if (!navigator.sendBeacon?.(closeUrl, payload)) {
+            fetch(closeUrl, {
+                method: 'POST',
+                body: payload,
+                credentials: 'same-origin',
+                keepalive: true,
+            }).catch(() => null);
+        }
+    });
+}
 
 document.querySelectorAll('[data-image-input]').forEach((input) => {
     input.addEventListener('change', () => {

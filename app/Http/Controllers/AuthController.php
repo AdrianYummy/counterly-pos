@@ -38,6 +38,12 @@ class AuthController extends Controller
 
         RateLimiter::clear($key);
         $request->session()->regenerate();
+        $now = now()->timestamp;
+        $request->session()->put([
+            'security.guard_started' => true,
+            'security.last_activity_at' => $now,
+            'security.last_heartbeat_at' => $now,
+        ]);
 
         return redirect()->route($request->user()->isAdmin() ? 'dashboard' : 'sales.create');
     }
