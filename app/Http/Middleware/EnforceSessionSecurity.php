@@ -28,10 +28,12 @@ class EnforceSessionSecurity
 
         $idleFor = $now - (int) $session->get('security.last_activity_at', $now);
         $heartbeatMissingFor = $now - (int) $session->get('security.last_heartbeat_at', $now);
+        $closePendingFor = $now - (int) $session->get('security.pending_close_at', $now);
         $idleLimit = max(60, (int) config('counterly.session_idle_timeout', 900));
         $heartbeatLimit = max(60, (int) config('counterly.session_heartbeat_timeout', 180));
+        $closeGrace = max(2, (int) config('counterly.session_close_grace', 10));
 
-        if ($idleFor >= $idleLimit || $heartbeatMissingFor >= $heartbeatLimit) {
+        if ($idleFor >= $idleLimit || $heartbeatMissingFor >= $heartbeatLimit || ($session->has('security.pending_close_at') && $closePendingFor >= $closeGrace)) {
             Auth::guard('web')->logout();
             $session->invalidate();
             $session->regenerateToken();

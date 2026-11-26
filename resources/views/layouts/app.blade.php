@@ -6,13 +6,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Dashboard' }} | {{ config('app.name', 'CaféFlow') }}</title>
     <link rel="icon" href="{{ asset('images/cafeflow-logo.png') }}" type="image/png">
-    <script>document.documentElement.dataset.theme=localStorage.getItem('cafeflow-theme')||'light';if(localStorage.getItem('cafeflow-sidebar')==='collapsed')document.documentElement.classList.add('sidebar-collapsed');const navigation=performance.getEntriesByType('navigation')[0];if(navigation&&['reload','back_forward'].includes(navigation.type))document.documentElement.classList.add('session-restore-lock');</script>
+    <script>document.documentElement.dataset.theme=localStorage.getItem('cafeflow-theme')||'light';if(localStorage.getItem('cafeflow-sidebar')==='collapsed')document.documentElement.classList.add('sidebar-collapsed');const navigation=performance.getEntriesByType('navigation')[0];const pendingClose=sessionStorage.getItem('cafeflow-close-token');if((navigation&&navigation.type==='back_forward'&&pendingClose)||document.wasDiscarded)document.documentElement.classList.add('session-restore-lock');</script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body data-session-guard
       data-session-heartbeat-url="{{ route('session.heartbeat') }}"
       data-session-activity-url="{{ route('session.activity') }}"
       data-session-close-url="{{ route('session.close') }}"
+      data-session-resume-url="{{ route('session.resume') }}"
       data-session-login-url="{{ route('login') }}"
       data-session-idle-seconds="{{ config('counterly.session_idle_timeout', 900) }}">
 <x-page-loader/>

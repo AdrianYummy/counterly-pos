@@ -80,14 +80,16 @@ if (sessionGuard) {
     const heartbeatUrl = sessionGuard.dataset.sessionHeartbeatUrl;
     const activityUrl = sessionGuard.dataset.sessionActivityUrl;
     const closeUrl = sessionGuard.dataset.sessionCloseUrl;
+    const resumeUrl = sessionGuard.dataset.sessionResumeUrl;
     const loginUrl = sessionGuard.dataset.sessionLoginUrl;
     const idleLimit = Math.max(60, Number(sessionGuard.dataset.sessionIdleSeconds || 900)) * 1000;
+    const navigationType = performance.getEntriesByType('navigation')[0]?.type || 'navigate';
     let lastInteraction = Date.now();
     let lastActivitySync = 0;
     let closingSession = false;
 
-    const securePost = async (url) => {
-        const response = await fetch(url, {
+    const securePost = async (url, data = null) => {
+        const options = {
             method: 'POST',
             credentials: 'same-origin',
             keepalive: true,
@@ -96,14 +98,19 @@ if (sessionGuard) {
                 'X-CSRF-TOKEN': csrfToken,
                 'X-Requested-With': 'XMLHttpRequest',
             },
-        });
+        };
+        if (data) {
+            options.headers['Content-Type'] = 'application/json';
+            options.body = JSON.stringify(data);
+        }
+        const response = await fetch(url, options);
         if (response.status === 401 || response.status === 419) {
             window.location.replace(loginUrl);
         }
         return response;
     };
 
-    const closeSession = () => securePost(closeUrl).catch(() => null);
+    const closeSession = () => securePost(closeUrl, { force: true }).catch(() => null);
     const lockAndLeave = async () => {
         if (closingSession) return;
         closingSession = true;
@@ -114,6 +121,12 @@ if (sessionGuard) {
         ]);
         window.location.replace(loginUrl);
     };
+
+    const pendingCloseToken = sessionStorage.getItem('cafeflow-close-token');
+    if (!document.documentElement.classList.contains('session-restore-lock') && navigationType === 'reload' && pendingCloseToken) {
+        securePost(resumeUrl, { token: pendingCloseToken })
+            .finally(() => sessionStorage.removeItem('cafeflow-close-token'));
+    }
 
     if (document.documentElement.classList.contains('session-restore-lock')) {
         lockAndLeave();
@@ -139,11 +152,14 @@ if (sessionGuard) {
         });
     }
 
-    window.addEventListener('pagehide', () => {
-        if (intentionalNavigation || closingSession) return;
+    window.addEventListener('pagehide', (event) => {
+        if (intentionalNavigation || closingSession || event.persisted) return;
         closingSession = true;
+        const closeToken = crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+        sessionStorage.setItem('cafeflow-close-token', closeToken);
         const payload = new FormData();
         payload.append('_token', csrfToken);
+        payload.append('token', closeToken);
         if (!navigator.sendBeacon?.(closeUrl, payload)) {
             fetch(closeUrl, {
                 method: 'POST',

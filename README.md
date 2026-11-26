@@ -13,7 +13,7 @@ CaféFlow is a complete Laravel point-of-sale project for IT0049, designed for a
 
 ## Implemented features
 
-- Username/password staff login, throttled failures, session regeneration, POST logout, browser-close/reload protection, 15-minute inactivity logout, and authentication on every management route
+- Username/password staff login, throttled failures, session regeneration, POST logout, refresh-safe tab-close protection, 15-minute inactivity logout, and authentication on every management route
 - Secure email-based password recovery with expiring, throttled, single-use reset tokens and non-enumerating responses
 - Branded welcome email for newly created staff accounts, with no password or password hash included
 - Live dashboard counts, Asia/Manila daily sales total, recent sales, low-stock list, and field-level accountability for product, stock, sale-driven stock, customer, and staff changes
@@ -139,7 +139,7 @@ Passwords use Laravel's configured one-way hash and are hidden from serializatio
 
 Uploaded files are limited to valid JPG, PNG, or WebP images up to 4 MB and 6000×6000 pixels. The application decodes them with GD, scales within 1200×1200 (avatars 600×600), re-encodes to WebP, and stores only relative paths under `storage/app/public/products` or `storage/app/public/avatars`. `public/storage` must remain linked to `storage/app/public`; production storage must persist across releases.
 
-Application timestamps remain UTC. Display and local-day dashboard boundaries use Asia/Manila. Session cookies are HttpOnly, SameSite=Lax, and browser-session-only by default. Authenticated pages send a short heartbeat, expire after 15 minutes without user activity, and close the server session when a tab closes, reloads, or is restored. The server rejects a missing heartbeat even when a crash prevents the close signal. Set `SESSION_SECURE_COOKIE=true`, `APP_URL=https://...`, `APP_DEBUG=false`, and `APP_ENV=production` on HTTPS hosting.
+Application timestamps remain UTC. Display and local-day dashboard boundaries use Asia/Manila. Session cookies are HttpOnly, SameSite=Lax, and browser-session-only by default. Authenticated pages send a short heartbeat and expire after 15 minutes without user activity. Closing a tab marks its server session for expiry, while a normal refresh cancels that close signal through a one-time handshake and keeps the user signed in. Restored or crash-discarded pages require a fresh sign-in, and the server rejects a missing heartbeat when a crash prevents the close signal. Set `SESSION_SECURE_COOKIE=true`, `APP_URL=https://...`, `APP_DEBUG=false`, and `APP_ENV=production` on HTTPS hosting.
 
 ## Verification
 

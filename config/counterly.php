@@ -7,4 +7,5 @@ return [
     'mail_preview' => env('MAIL_PREVIEW_LINK', false),
     'session_idle_timeout' => (int) env('SESSION_IDLE_TIMEOUT', 900),
     'session_heartbeat_timeout' => (int) env('SESSION_HEARTBEAT_TIMEOUT', 180),
+    'session_close_grace' => (int) env('SESSION_CLOSE_GRACE', 10),
 ];

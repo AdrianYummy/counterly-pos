@@ -30,6 +30,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::post('/session/close', [SessionSecurityController::class, 'close'])->name('session.close');
+    Route::post('/session/resume', [SessionSecurityController::class, 'resume'])->name('session.resume');
 
     Route::middleware('session.secure')->group(function () {
         Route::post('/session/heartbeat', [SessionSecurityController::class, 'heartbeat'])->name('session.heartbeat');

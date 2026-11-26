@@ -6,7 +6,7 @@
 4. Administrators can use **Staff Accounts** to create login accounts, assign Administrator or Cashier roles, replace passwords, and manage optional avatars. Leaving password blank during edit preserves it. Cashiers cannot open or call staff-management routes.
 5. Open **Point of Sale**, search and select any in-stock products, then adjust each quantity in the cart. Select a chosen product again or use its × button to remove a mistake. Optionally select a customer and choose **Complete Sale**. Enable **Email receipt to customer** when a named customer is selected. The server recalculates every line and cancels the entire checkout if any item lacks stock.
 6. Use **Transactions** to search/filter immutable sales and open receipt details. A named-customer receipt can be emailed again or printed.
-7. Use **Sign out** in the header when a shift ends. CaféFlow confirms the action before closing the staff session. For shared-terminal security, closing, reloading, or restoring an authenticated tab also requires a fresh sign-in. An inactive workspace signs out after 15 minutes, and the server rejects a session whose browser heartbeat has stopped.
+7. Use **Sign out** in the header when a shift ends. CaféFlow confirms the action before closing the staff session. Refreshing an authenticated page keeps the user signed in, while closing and later restoring the tab requires a fresh sign-in. An inactive workspace signs out after 15 minutes, and the server rejects a session whose browser heartbeat has stopped after a crash.
 
 Long product, customer, staff, transaction, and accountability lists show 10 records at a time. Use the numbered Previous/Next controls below each list to open the remaining pages without loading every record at once.
 

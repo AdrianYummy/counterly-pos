@@ -114,11 +114,90 @@ class AuthenticationTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
 
         $this->actingAs($admin)
-            ->post('/session/close')
+            ->post('/session/close', ['force' => true])
             ->assertNoContent();
 
         $this->assertGuest();
         $this->get('/dashboard')->assertRedirect('/login');
+    }
+
+    public function test_a_legacy_close_signal_does_not_log_out_a_refreshing_page(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->post('/session/close')
+            ->assertNoContent();
+
+        $this->get('/dashboard')->assertOk();
+        $this->assertAuthenticatedAs($admin);
+    }
+
+    public function test_page_refresh_cancels_a_pending_tab_close_without_logging_out(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $token = 'refresh-token-123';
+
+        $this->actingAs($admin)
+            ->post('/session/close', ['token' => $token])
+            ->assertNoContent();
+
+        $this->assertAuthenticatedAs($admin);
+
+        $this->post('/session/resume', ['token' => $token])
+            ->assertNoContent();
+
+        $this->get('/dashboard')->assertOk();
+        $this->assertAuthenticatedAs($admin);
+    }
+
+    public function test_late_close_beacon_cannot_log_out_an_already_resumed_refresh(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $token = 'racing-refresh-token';
+
+        $this->actingAs($admin)
+            ->post('/session/resume', ['token' => $token])
+            ->assertNoContent();
+
+        $this->post('/session/close', ['token' => $token])
+            ->assertNoContent();
+
+        $this->get('/dashboard')->assertOk();
+        $this->assertAuthenticatedAs($admin);
+    }
+
+    public function test_an_uncancelled_tab_close_expires_the_session(): void
+    {
+        config()->set('counterly.session_close_grace', 2);
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->post('/session/close', ['token' => 'closed-tab-token'])
+            ->assertNoContent();
+
+        $this->travel(3)->seconds();
+
+        $this->get('/dashboard')
+            ->assertRedirect('/login')
+            ->assertSessionHas('warning');
+        $this->assertGuest();
+    }
+
+    public function test_an_expired_close_token_cannot_be_resumed_later(): void
+    {
+        config()->set('counterly.session_close_grace', 2);
+        $admin = User::factory()->create(['role' => 'admin']);
+        $token = 'expired-close-token';
+
+        $this->actingAs($admin)
+            ->post('/session/close', ['token' => $token])
+            ->assertNoContent();
+
+        $this->travel(3)->seconds();
+
+        $this->post('/session/resume', ['token' => $token])->assertUnauthorized();
+        $this->assertGuest();
     }
 
     public function test_authenticated_layout_contains_the_browser_session_guard(): void
@@ -130,6 +209,8 @@ class AuthenticationTest extends TestCase
             ->assertOk()
             ->assertSee('data-session-guard', false)
             ->assertSee(route('session.close'), false)
-            ->assertSee('session-restore-lock', false);
+            ->assertSee(route('session.resume'), false)
+            ->assertSee('session-restore-lock', false)
+            ->assertDontSee("['reload','back_forward']", false);
     }
 }
