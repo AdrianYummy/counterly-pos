@@ -99,6 +99,18 @@ Required PHP extensions include Ctype, cURL, DOM, Fileinfo, Filter, GD, Hash, Mb
    MAIL_FROM_NAME="CaféFlow"
    ```
 
+   Alternatively, CaféFlow includes the official Resend API SDK. After verifying a sending domain and creating a restricted API key, use:
+
+   ```dotenv
+   MAIL_MAILER=resend
+   RESEND_API_KEY=re_your_private_key
+   MAIL_PREVIEW_LINK=false
+   MAIL_FROM_ADDRESS=noreply@your-verified-domain.example
+   MAIL_FROM_NAME="CaféFlow"
+   ```
+
+   Keep `MAIL_MAILER=log` until all Resend values are ready, and never commit the real API key.
+
 7. Install/build assets, migrate, seed, and expose prepared uploads:
 
    ```powershell
