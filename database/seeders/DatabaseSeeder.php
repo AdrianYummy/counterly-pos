@@ -34,18 +34,29 @@ class DatabaseSeeder extends Seeder
         }
 
         foreach ([
-            ['name' => 'Arabica Coffee Beans 500g', 'price' => '385.00', 'stock_quantity' => 18],
-            ['name' => 'Classic Milk Tea', 'price' => '95.00', 'stock_quantity' => 25],
-            ['name' => 'Butter Croissant', 'price' => '78.00', 'stock_quantity' => 12],
-            ['name' => 'Tuna Sandwich', 'price' => '125.00', 'stock_quantity' => 8],
-            ['name' => 'Sparkling Water', 'price' => '55.00', 'stock_quantity' => 30],
-            ['name' => 'Chocolate Cookie', 'price' => '45.00', 'stock_quantity' => 4],
-            ['name' => 'Ceramic Mug', 'price' => '249.00', 'stock_quantity' => 6],
-            ['name' => 'Canvas Tote Bag', 'price' => '199.00', 'stock_quantity' => 3],
-            ['name' => 'Cold Brew Bottle', 'price' => '145.00', 'stock_quantity' => 10],
-            ['name' => 'Seasonal Gift Box', 'price' => '799.00', 'stock_quantity' => 0],
+            ['name' => 'Arabica Coffee Beans 500g', 'price' => '385.00', 'stock_quantity' => 18, 'image' => 'products/catalog-arabica-coffee-beans.jpg'],
+            ['name' => 'Classic Milk Tea', 'price' => '95.00', 'stock_quantity' => 25, 'image' => 'products/catalog-classic-milk-tea.jpg'],
+            ['name' => 'Butter Croissant', 'price' => '78.00', 'stock_quantity' => 12, 'image' => 'products/catalog-butter-croissant.jpg'],
+            ['name' => 'Tuna Sandwich', 'price' => '125.00', 'stock_quantity' => 8, 'image' => 'products/catalog-tuna-sandwich.jpg'],
+            ['name' => 'Sparkling Water', 'price' => '55.00', 'stock_quantity' => 30, 'image' => 'products/catalog-sparkling-water.jpg'],
+            ['name' => 'Chocolate Cookie', 'price' => '45.00', 'stock_quantity' => 4, 'image' => 'products/catalog-chocolate-cookie.jpg'],
+            ['name' => 'Banana Bread', 'price' => '150.00', 'stock_quantity' => 4, 'image' => 'products/catalog-banana-bread.jpg'],
+            ['name' => 'Ceramic Mug', 'price' => '249.00', 'stock_quantity' => 6, 'image' => 'products/catalog-ceramic-mug.jpg'],
+            ['name' => 'Canvas Tote Bag', 'price' => '199.00', 'stock_quantity' => 3, 'image' => 'products/catalog-canvas-tote-bag.jpg'],
+            ['name' => 'Cold Brew Bottle', 'price' => '145.00', 'stock_quantity' => 10, 'image' => 'products/catalog-cold-brew-bottle.jpg'],
+            ['name' => 'Seasonal Gift Box', 'price' => '799.00', 'stock_quantity' => 0, 'image' => 'products/catalog-seasonal-gift-box.jpg'],
         ] as $product) {
-            Product::updateOrCreate(['name' => $product['name']], $product + ['image' => null]);
+            $catalogImage = $product['image'];
+            unset($product['image']);
+
+            $storedProduct = Product::firstOrNew(['name' => $product['name']]);
+            $storedProduct->fill($product);
+
+            if (! $storedProduct->image) {
+                $storedProduct->image = $catalogImage;
+            }
+
+            $storedProduct->save();
         }
 
         foreach ([

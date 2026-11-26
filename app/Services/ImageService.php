@@ -51,7 +51,12 @@ class ImageService
 
     public function delete(?string $path): void
     {
-        if ($path && (str_starts_with($path, 'products/') || str_starts_with($path, 'avatars/'))) {
+        $isManagedUpload = $path && (
+            str_starts_with($path, 'avatars/')
+            || (str_starts_with($path, 'products/') && ! str_starts_with($path, 'products/catalog-'))
+        );
+
+        if ($isManagedUpload) {
             Storage::disk('public')->delete($path);
         }
     }
