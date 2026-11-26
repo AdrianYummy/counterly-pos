@@ -1,0 +1,1 @@
+<x-layouts.app title="Edit Customer"><section class="panel form-panel"><div class="panel-head"><div><p class="eyebrow">Customers</p><h2>Edit {{ $customer->full_name }}</h2></div></div><form method="POST" action="{{ route('customers.update', $customer) }}">@csrf @method('PUT') @include('customers._form', ['submitLabel' => 'Save changes'])</form></section></x-layouts.app>

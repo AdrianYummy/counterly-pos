@@ -1,0 +1,123 @@
+# Counterly POS
+
+Counterly is a complete Laravel point-of-sale project for IT0049. It manages products, customers, staff accounts, inventory-backed single-product sales, and read-only transaction history through an authenticated, responsive interface.
+
+## Submission details
+
+- Student / group: _Complete before submission_
+- Members and roles: _Complete before submission_
+- Section: _Complete before submission_
+- Professor: _Complete before submission_
+- GitHub repository: _Create/paste the real URL before submission_
+- Live website: _Deploy/paste the real URL before submission_
+
+## Implemented features
+
+- Username/password staff login, throttled failures, session regeneration, POST logout, and authentication on every management route
+- Live dashboard counts, Asia/Manila daily sales total, recent sales, and low-stock list
+- Product, customer, and staff CRUD with validation, search, pagination, detail pages, and protected deletion
+- GD-backed image validation, resize, WebP re-encoding, generated filenames, replacement cleanup, and local placeholders
+- Record Sale flow with an optional customer, server-selected staff identity, exact centavo totals, database transaction, `lockForUpdate()`, stock deduction, insufficient-stock rejection, and overflow protection
+- Read-only sales history with search, product/staff/date filters and transaction details
+- Stale-stock detection so an open product edit cannot undo a newer sale
+- Restrictive foreign keys; transaction history blocks deletion of referenced products, customers, or staff
+- Current-account and final-staff safeguards
+- Seed data: 10 products, 5 fictional customers, and 2 staff accounts
+- Vite source and committed production assets for hosts without Node.js
+
+The required model is intentionally one product type per sale row. Carts, payment gateways, VAT, discounts, refunds, barcode scanning, roles, public registration, and password-reset email are outside this assignment's baseline.
+
+## Tested environment
+
+| Component | Tested version |
+| --- | --- |
+| Laravel | 12.74.0 |
+| PHP | 8.2.12 (XAMPP) |
+| Database | MariaDB 10.4.32 (MySQL compatible) |
+| Composer | 2.10.3 |
+| Node.js / npm | 26.13.1 / 11.20.0 |
+| Image driver | PHP GD, output WebP |
+
+Required PHP extensions include Ctype, cURL, DOM, Fileinfo, Filter, GD, Hash, Mbstring, OpenSSL, PCRE, PDO, `pdo_mysql`, Session, Tokenizer, XML, and XMLWriter. Laravel 12 is used because this machine has PHP 8.2; Laravel 13 requires PHP 8.3 or newer.
+
+## Windows/XAMPP setup
+
+1. Start Apache (optional if using Artisan) and MySQL from XAMPP.
+2. Create an empty database:
+
+   ```sql
+   CREATE DATABASE counterly_pos CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+
+3. From this project folder, install dependencies and create local settings:
+
+   ```powershell
+   composer install
+   Copy-Item .env.example .env
+   php artisan key:generate
+   ```
+
+4. Set the real `DB_*` values in `.env`. Keep these baseline settings:
+
+   ```dotenv
+   SESSION_DRIVER=file
+   CACHE_STORE=file
+   QUEUE_CONNECTION=sync
+   DISPLAY_TIMEZONE=Asia/Manila
+   ```
+
+5. Set a private initial password in `.env` before seeding:
+
+   ```dotenv
+   DEMO_STAFF_PASSWORD=YourPrivateDemoPassword
+   ```
+
+6. Install/build assets, migrate, seed, and expose prepared uploads:
+
+   ```powershell
+   npm ci
+   npm run build
+   php artisan migrate
+   php artisan db:seed
+   php artisan storage:link
+   ```
+
+7. Start the application:
+
+   ```powershell
+   php artisan serve
+   ```
+
+   Open `http://127.0.0.1:8000`. For source asset hot reload, run `npm run dev` in a second terminal. A production build is already included under `public/build`.
+
+Seeded usernames are `admin` and `cashier`; both use the password you set in `DEMO_STAFF_PASSWORD`. Change assessor credentials through a private submission channel—never commit a real password. The seeder uses stable usernames/emails and can be rerun without silently duplicating demo records, but it must not be run automatically on production redeployments.
+
+## Design and security notes
+
+The schema deliberately uses signed `INT` identifiers, `DECIMAL(10,2)` money, created-at-only timestamps, nullable `sales.customer_id`, and restrictive foreign keys. Passwords use Laravel's configured one-way hash. Models expose explicit fillable fields; controllers never accept client totals, seller IDs, or timestamps. Blade escapes user content, Form Requests validate writes, and Laravel CSRF middleware remains enabled.
+
+Uploaded files are limited to valid JPG, PNG, or WebP images up to 4 MB and 6000×6000 pixels. The application decodes them with GD, scales within 1200×1200 (avatars 600×600), re-encodes to WebP, and stores only relative paths under `storage/app/public/products` or `storage/app/public/avatars`. `public/storage` must remain linked to `storage/app/public`; production storage must persist across releases.
+
+Application timestamps remain UTC. Display and local-day dashboard boundaries use Asia/Manila. Session cookies are HttpOnly and SameSite=Lax by default; set `SESSION_SECURE_COOKIE=true`, `APP_URL=https://...`, `APP_DEBUG=false`, and `APP_ENV=production` on HTTPS hosting.
+
+## Verification
+
+```powershell
+php artisan route:list
+php artisan test
+composer check-platform-reqs
+npm run build
+```
+
+The latest local run passed **12 tests / 59 assertions**, the Vite production build, Composer platform checks, MariaDB migrations/seeders, and authenticated HTTP smoke checks. See [docs/TESTING.md](docs/TESTING.md) for executed versus pending checks.
+
+Additional guides:
+
+- [Schema and business rules](docs/SCHEMA.md)
+- [User guide](docs/USER_GUIDE.md)
+- [Testing record](docs/TESTING.md)
+- [Deployment and submission](docs/DEPLOYMENT.md)
+
+## Known external actions
+
+No GitHub account, repository destination, hosting account, domain, or production database credentials were available in the build environment. The source is deployable, but a real repository URL and hosted URL must be created and verified before submission. Do not claim those rubric items until their checks in `docs/TESTING.md` pass.
