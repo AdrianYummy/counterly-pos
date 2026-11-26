@@ -269,6 +269,21 @@ class ManagementTest extends TestCase
             ->assertViewHas('topProducts', fn ($products) => $products->first()['name'] === 'Analytics Coffee' && $products->first()['units'] === 3);
     }
 
+    public function test_dashboard_accountability_panel_is_collapsible_and_closed_by_default(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)->get(route('dashboard'));
+
+        $response->assertOk()
+            ->assertSee('Recent record activity')
+            ->assertSee('data-accountability-disclosure', false);
+        $this->assertMatchesRegularExpression(
+            '/<details(?=[^>]*data-accountability-disclosure)(?![^>]*\sopen(?:\s|=|>))[^>]*>/',
+            $response->getContent(),
+        );
+    }
+
     public function test_image_editors_appear_before_product_and_staff_fields(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

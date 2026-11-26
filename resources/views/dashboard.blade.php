@@ -64,45 +64,49 @@
             @else<ul class="stock-list">@foreach($lowStockProducts as $product)<li><div><a href="{{ route('products.show', $product) }}">{{ $product->name }}</a><small>₱{{ number_format((float) $product->price, 2) }} each</small></div><span class="badge {{ $product->stock_quantity === 0 ? 'danger' : 'warning' }}">{{ $product->stock_quantity === 0 ? 'Out of stock' : $product->stock_quantity.' left' }}</span></li>@endforeach</ul>@endif
         </section>
     </div>
-    <section class="panel activity-panel" aria-labelledby="recent-edits-title">
-        <div class="panel-head">
-            <div><p class="eyebrow">Accountability</p><h2 id="recent-edits-title">Recent record activity</h2><p>See who created, updated, sold, or deleted products, stock, customers, and staff accounts.</p></div>
-            <span class="result-count">{{ number_format($recentEdits->total()) }} recorded</span>
-        </div>
-        @if($recentEdits->isEmpty())
-            <div class="empty-state compact"><div class="empty-icon"><x-icon name="history"/></div><h3>No record activity yet</h3><p>New product, stock, customer, and staff changes will appear here.</p></div>
-        @else
-            <ol class="activity-list">
-                @foreach($recentEdits as $edit)
-                    @php
-                        $subjectLabel = match ($edit->subject_type) {
-                            'product' => 'Product / stock',
-                            'staff' => 'Staff account',
-                            default => 'Customer',
-                        };
-                        $badgeClass = match ($edit->subject_type) {
-                            'product' => 'info',
-                            'staff' => 'warning',
-                            default => 'success',
-                        };
-                    @endphp
-                    <li>
-                        <div class="activity-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($edit->actor_name, 0, 1)) }}</div>
-                        <div class="activity-main">
-                            <div class="activity-heading">
-                                <p><strong>{{ $edit->actor_name }}</strong> {{ $edit->action }} <b>{{ $edit->subject_name }}</b> <span class="badge {{ $badgeClass }}">{{ $subjectLabel }}</span></p>
-                                <time datetime="{{ $edit->created_at->toIso8601String() }}">{{ $edit->created_at->timezone(config('counterly.display_timezone'))->format('M j, Y · g:i A') }}</time>
+    <details class="panel activity-panel activity-disclosure" aria-labelledby="recent-edits-title" data-accountability-disclosure>
+        <summary>
+            <span class="activity-summary-icon" aria-hidden="true"><x-icon name="history"/></span>
+            <span class="activity-summary-copy"><span class="eyebrow">Accountability</span><strong id="recent-edits-title">Recent record activity</strong><small>Review profile, product, stock, and account changes when needed.</small></span>
+            <span class="activity-summary-actions"><span class="result-count">{{ number_format($recentEdits->total()) }} recorded</span><span class="disclosure-state" aria-hidden="true"></span><span class="disclosure-chevron" aria-hidden="true">⌄</span></span>
+            <span class="sr-only">Toggle accountability records</span>
+        </summary>
+        <div class="activity-disclosure-content">
+            @if($recentEdits->isEmpty())
+                <div class="empty-state compact"><div class="empty-icon"><x-icon name="history"/></div><h3>No record activity yet</h3><p>New product, stock, customer, and staff changes will appear here.</p></div>
+            @else
+                <ol class="activity-list">
+                    @foreach($recentEdits as $edit)
+                        @php
+                            $subjectLabel = match ($edit->subject_type) {
+                                'product' => 'Product / stock',
+                                'staff' => 'Staff account',
+                                default => 'Customer',
+                            };
+                            $badgeClass = match ($edit->subject_type) {
+                                'product' => 'info',
+                                'staff' => 'warning',
+                                default => 'success',
+                            };
+                        @endphp
+                        <li>
+                            <div class="activity-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($edit->actor_name, 0, 1)) }}</div>
+                            <div class="activity-main">
+                                <div class="activity-heading">
+                                    <p><strong>{{ $edit->actor_name }}</strong> {{ $edit->action }} <b>{{ $edit->subject_name }}</b> <span class="badge {{ $badgeClass }}">{{ $subjectLabel }}</span></p>
+                                    <time datetime="{{ $edit->created_at->toIso8601String() }}">{{ $edit->created_at->timezone(config('counterly.display_timezone'))->format('M j, Y · g:i A') }}</time>
+                                </div>
+                                <ul class="change-list">
+                                    @foreach($edit->changes as $field => $change)
+                                        <li><span>{{ Illuminate\Support\Str::headline($field) }}</span><del>{{ $change['from'] }}</del><span aria-hidden="true">→</span><ins>{{ $change['to'] }}</ins></li>
+                                    @endforeach
+                                </ul>
                             </div>
-                            <ul class="change-list">
-                                @foreach($edit->changes as $field => $change)
-                                    <li><span>{{ Illuminate\Support\Str::headline($field) }}</span><del>{{ $change['from'] }}</del><span aria-hidden="true">→</span><ins>{{ $change['to'] }}</ins></li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    </li>
-                @endforeach
-            </ol>
-            <x-pagination :paginator="$recentEdits" label="accountability records"/>
-        @endif
-    </section>
+                        </li>
+                    @endforeach
+                </ol>
+                <x-pagination :paginator="$recentEdits" label="accountability records"/>
+            @endif
+        </div>
+    </details>
 </x-layouts.app>

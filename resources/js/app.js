@@ -23,6 +23,14 @@ document.querySelector('[data-sidebar-toggle]')?.addEventListener('click', () =>
     localStorage.setItem('cafeflow-sidebar', collapsed ? 'collapsed' : 'expanded');
 });
 
+const accountabilityDisclosure = document.querySelector('[data-accountability-disclosure]');
+if (accountabilityDisclosure) {
+    accountabilityDisclosure.open = localStorage.getItem('cafeflow-accountability') === 'open';
+    accountabilityDisclosure.addEventListener('toggle', () => {
+        localStorage.setItem('cafeflow-accountability', accountabilityDisclosure.open ? 'open' : 'closed');
+    });
+}
+
 const startLoading = () => document.body.classList.add('is-loading');
 let intentionalNavigation = false;
 window.addEventListener('pageshow', () => {

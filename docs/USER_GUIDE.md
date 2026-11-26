@@ -1,6 +1,6 @@
 # User guide
 
-1. Sign in with a staff username and password. Cashiers open directly on **Point of Sale**; administrators open on **Dashboard**, where the seven-day sales graph shows daily revenue and transaction details, the top-products graph ranks units sold, and accountability records show who changed each record. There is no public registration.
+1. Sign in with a staff username and password. Cashiers open directly on **Point of Sale**; administrators open on **Dashboard**, where the seven-day sales graph shows daily revenue and transaction details, the top-products graph ranks units sold, and the collapsible **Recent record activity** panel shows who changed each record. CaféFlow remembers whether that accountability panel was open or closed. There is no public registration.
 2. Use **Products** to search and view inventory. Administrators can add, edit, or delete unused products; cashiers cannot change inventory records directly. Zero and low stock are labeled automatically.
 3. Use **Customers** for contact records. A sale may instead remain a walk-in transaction.
 4. Administrators can use **Staff Accounts** to create login accounts, assign Administrator or Cashier roles, replace passwords, and manage optional avatars. Leaving password blank during edit preserves it. Cashiers cannot open or call staff-management routes.
