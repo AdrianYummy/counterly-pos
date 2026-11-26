@@ -64,12 +64,25 @@ class SaleController extends Controller
 
     public function store(SaleRequest $request): RedirectResponse
     {
-        $sale = $this->sales->record(
-            Product::where('public_id', $request->validated('product_id'))->firstOrFail()->id,
+        $data = $request->validated();
+        $requestItems = $request->has('items')
+            ? $data['items']
+            : [['product_id' => $data['product_id'], 'quantity' => $data['quantity']]];
+        $productIds = Product::whereIn('public_id', collect($requestItems)->pluck('product_id'))
+            ->pluck('id', 'public_id');
+        $items = collect($requestItems)->values()->map(fn ($item, $index) => [
+            'product_id' => $productIds[$item['product_id']],
+            'quantity' => (int) $item['quantity'],
+            'error_key' => $request->has('items') ? "items.{$index}.quantity" : 'quantity',
+        ])->all();
+
+        $sales = $this->sales->recordMany(
+            $items,
             $request->filled('customer_id') ? Customer::where('public_id', $request->validated('customer_id'))->firstOrFail()->id : null,
-            (int) $request->validated('quantity'),
             $request->user(),
         );
+        /** @var Sale $sale */
+        $sale = $sales->first();
 
         $sale->load(['customer', 'product', 'staff']);
         $emailNotice = null;
@@ -91,14 +104,16 @@ class SaleController extends Controller
 
     public function show(Sale $sale): View
     {
-        $sale->load(['product', 'customer', 'staff']);
+        $items = $sale->receiptItems();
+        $sale = $items->first();
+        $transactionTotal = $items->sum(fn (Sale $item) => (float) $item->total_price);
 
-        return view('sales.show', compact('sale'));
+        return view('sales.show', compact('sale', 'items', 'transactionTotal'));
     }
 
     public function emailReceipt(Sale $sale): RedirectResponse
     {
-        $sale->load(['customer', 'product', 'staff']);
+        $sale = $sale->receiptItems()->first();
         if (! $sale->customer) {
             return back()->with('error', 'A walk-in transaction has no customer email address.');
         }

@@ -52,6 +52,66 @@ class SaleWorkflowTest extends TestCase
         $this->assertSame('3', $stockLog->changes['quantity_sold']['to']);
     }
 
+    public function test_multiple_products_are_recorded_as_one_transaction_and_shown_on_one_receipt(): void
+    {
+        $coffee = Product::create(['name' => 'Cart Coffee', 'price' => '120.00', 'stock_quantity' => 10]);
+        $pastry = Product::create(['name' => 'Cart Pastry', 'price' => '75.00', 'stock_quantity' => 8]);
+        $customer = Customer::create(['full_name' => 'Cart Customer', 'email' => 'cart@example.test']);
+
+        $response = $this->actingAs($this->staff)->post(route('sales.store'), [
+            'items' => [
+                ['product_id' => $coffee->public_id, 'quantity' => 2],
+                ['product_id' => $pastry->public_id, 'quantity' => 3],
+            ],
+            'customer_id' => $customer->public_id,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertSame(8, $coffee->fresh()->stock_quantity);
+        $this->assertSame(5, $pastry->fresh()->stock_quantity);
+        $this->assertDatabaseCount('sales', 2);
+
+        $sales = Sale::orderBy('id')->get();
+        $this->assertNotNull($sales->first()->transaction_id);
+        $this->assertSame($sales->first()->transaction_id, $sales->last()->transaction_id);
+
+        $this->get($response->headers->get('Location'))
+            ->assertOk()
+            ->assertSee('Cart Coffee')
+            ->assertSee('Cart Pastry')
+            ->assertSee('465.00');
+    }
+
+    public function test_multi_product_checkout_rolls_back_every_item_when_one_has_insufficient_stock(): void
+    {
+        $available = Product::create(['name' => 'Available Cart Item', 'price' => '50.00', 'stock_quantity' => 5]);
+        $limited = Product::create(['name' => 'Limited Cart Item', 'price' => '40.00', 'stock_quantity' => 1]);
+
+        $this->actingAs($this->staff)->post(route('sales.store'), [
+            'items' => [
+                ['product_id' => $available->public_id, 'quantity' => 2],
+                ['product_id' => $limited->public_id, 'quantity' => 2],
+            ],
+        ])->assertSessionHasErrors('items.1.quantity');
+
+        $this->assertSame(5, $available->fresh()->stock_quantity);
+        $this->assertSame(1, $limited->fresh()->stock_quantity);
+        $this->assertDatabaseCount('sales', 0);
+        $this->assertDatabaseCount('activity_logs', 0);
+    }
+
+    public function test_point_of_sale_contains_multi_product_cart_and_remove_controls(): void
+    {
+        Product::create(['name' => 'Selectable Cart Item', 'price' => '80.00', 'stock_quantity' => 4]);
+
+        $this->actingAs($this->staff)->get(route('sales.create'))
+            ->assertOk()
+            ->assertSee('Build the order')
+            ->assertSee('data-cart-item-template', false)
+            ->assertSee('data-cart-remove', false)
+            ->assertSee('data-quantity-plus', false);
+    }
+
     public function test_insufficient_stock_rejects_sale_without_any_write(): void
     {
         $product = Product::create(['name' => 'Limited Item', 'price' => '25.00', 'stock_quantity' => 7]);

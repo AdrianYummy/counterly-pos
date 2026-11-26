@@ -20,16 +20,22 @@ class SaleReceiptNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $sale = $this->sale->loadMissing(['product', 'staff']);
+        $items = $this->sale->receiptItems();
+        $sale = $items->first();
+        $total = $items->sum(fn (Sale $item) => (float) $item->total_price);
 
-        return (new MailMessage)
-            ->subject('Your CaféFlow receipt '.$sale->publicReference())
+        $message = (new MailMessage)
+            ->subject('Your CaféFlow receipt '.$sale->transactionReference())
             ->greeting('Hello '.$notifiable->full_name.',')
             ->line('Thank you. Your purchase was recorded successfully.')
-            ->line('Receipt reference: '.$sale->publicReference())
-            ->line('Product: '.$sale->product->name)
-            ->line('Quantity: '.number_format($sale->quantity))
-            ->line('Total: PHP '.number_format((float) $sale->total_price, 2))
+            ->line('Receipt reference: '.$sale->transactionReference());
+
+        foreach ($items as $item) {
+            $message->line($item->product->name.' × '.number_format($item->quantity).' — PHP '.number_format((float) $item->total_price, 2));
+        }
+
+        return $message
+            ->line('Total: PHP '.number_format($total, 2))
             ->line('Cashier: '.$sale->staff->full_name)
             ->line('Purchased on '.$sale->created_at->timezone(config('counterly.display_timezone'))->format('F j, Y, g:i A').' PHT.')
             ->salutation('CaféFlow');

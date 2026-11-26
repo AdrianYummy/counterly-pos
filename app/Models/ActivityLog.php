@@ -82,7 +82,7 @@ class ActivityLog extends Model
             'changes' => [
                 'stock_quantity' => ['from' => (string) $beforeStock, 'to' => (string) $product->stock_quantity],
                 'quantity_sold' => ['from' => 'Not set', 'to' => (string) $sale->quantity],
-                'transaction' => ['from' => 'Not set', 'to' => $sale->publicReference()],
+                'transaction' => ['from' => 'Not set', 'to' => $sale->transactionReference()],
             ],
         ]);
     }

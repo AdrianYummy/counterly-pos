@@ -8,7 +8,7 @@
 - `password_reset_tokens` stores a hashed, expiring token keyed by a staff email and is deleted after a successful reset.
 - `activity_logs` stores the acting staff member, action, product/customer/staff public reference, timestamp, and field-level before/after values for successful creates, updates, deletions, and sale-driven stock deductions. Product entries include price, image, stock quantity, quantity sold, and transaction reference changes. Password values and hashes are never recorded; a password replacement is stored only as “Updated securely.”
 
-Primary identifiers and foreign keys remain signed auto-increment/integer columns internally. Users, products, customers, and sales also have unique UUID `public_id` values used for route binding, filter values, and sale-form record references. Internal numeric IDs are therefore not disclosed through application URLs. Money is stored as `DECIMAL(10,2)`. Every table has `created_at`; the models explicitly disable `updated_at` to match the supplied schema. Sales have an additional creation-date index for history ordering/filtering.
+Primary identifiers and foreign keys remain signed auto-increment/integer columns internally. Users, products, customers, and sales also have unique UUID `public_id` values used for route binding, filter values, and sale-form record references. Internal numeric IDs are therefore not disclosed through application URLs. Sale lines completed in one checkout share an indexed UUID `transaction_id`, allowing one receipt to contain multiple products. Money is stored as `DECIMAL(10,2)`. Every table has `created_at`; the models explicitly disable `updated_at` to match the supplied schema. Sales have an additional creation-date index for history ordering/filtering.
 
 Staff email addresses are unique and required by application validation. They are used for account recovery. Customer email addresses can receive an optional transaction receipt; sending occurs only after the stock/sale transaction has committed, so a mail-server failure cannot undo or duplicate a completed sale.
 
@@ -25,7 +25,7 @@ Customer full names and email addresses are also unique. Customer names use the 
 
 ## Transaction rules
 
-`SaleService` begins a database transaction and locks the selected product row. It rejects insufficient stock and totals above `99,999,999.99`, calculates with integer centavos, decrements stock, and inserts the sale. Any exception rolls both operations back. Submitted price, total, seller, and timestamp fields are ignored.
+`SaleService` begins one database transaction and locks every selected product row in ID order. It rejects insufficient stock and line totals above `99,999,999.99`, calculates with integer centavos, decrements stock, and inserts the grouped sale lines. Any exception rolls back every item in the checkout. Submitted price, total, seller, and timestamp fields are ignored.
 
 Sales are immutable in the UI. Restrictive foreign keys and controller checks block deletion of referenced products, customers, and staff, including a race where a sale appears after a deletion page was loaded. Unreferenced records may be deleted by an administrator. Staff cannot delete their own session account, the final account, or the final administrator.
 

@@ -166,24 +166,24 @@ document.querySelectorAll('[data-image-input]').forEach((input) => {
 const money = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
 const saleForm = document.querySelector('[data-sale-form]');
 if (saleForm) {
-    const options = [...saleForm.querySelectorAll('[data-product-option]')];
     const cards = [...saleForm.querySelectorAll('[data-product-card]')];
-    const quantity = saleForm.querySelector('[data-quantity]');
     const customer = saleForm.querySelector('[data-customer-select]');
     const emailReceipt = saleForm.querySelector('[data-email-receipt]');
     const submit = saleForm.querySelector('[data-sale-submit]');
-    const selectedEmpty = saleForm.querySelector('[data-selected-empty]');
-    const selectedItem = saleForm.querySelector('[data-selected-item]');
-    const selectedName = saleForm.querySelector('[data-selected-name]');
-    const selectedImage = saleForm.querySelector('[data-selected-image]');
-    const unitPrice = saleForm.querySelector('[data-unit-price]');
-    const stockPreview = saleForm.querySelector('[data-stock-preview]');
+    const cartEmpty = saleForm.querySelector('[data-cart-empty]');
+    const cartList = saleForm.querySelector('[data-cart-list]');
+    const cartTemplate = saleForm.querySelector('[data-cart-item-template]');
+    const cartCount = saleForm.querySelector('[data-cart-count]');
+    const productCount = saleForm.querySelector('[data-product-count]');
+    const unitCount = saleForm.querySelector('[data-unit-count]');
     const totalPreview = saleForm.querySelector('[data-total-preview]');
     const search = saleForm.querySelector('[data-product-search]');
     const emptySearch = saleForm.querySelector('[data-catalog-empty]');
     const resultCount = saleForm.querySelector('[data-result-count]');
+    const mobileCount = saleForm.querySelector('[data-mobile-count]');
     const mobileTotal = saleForm.querySelector('[data-mobile-total]');
     const viewButtons = [...saleForm.querySelectorAll('[data-pos-view]')];
+    const cart = new Map();
 
     const updateReceiptOption = () => {
         const enabled = Boolean(customer.value);
@@ -193,30 +193,99 @@ if (saleForm) {
         if (enabled && wasDisabled) emailReceipt.checked = true;
     };
 
-    const updateSale = () => {
-        const selected = options.find((option) => option.checked);
-        cards.forEach((card) => card.classList.toggle('selected', card.contains(selected)));
-        if (!selected) {
-            selectedEmpty.hidden = false;
-            selectedItem.hidden = true;
-            stockPreview.textContent = '—';
-            totalPreview.textContent = money.format(0);
-            submit.disabled = true;
+    const updateCart = () => {
+        let total = 0;
+        let units = 0;
+        let invalid = false;
+
+        [...cart.values()].forEach((item, index) => {
+            const quantity = Number(item.quantity.value);
+            const stock = Number(item.card.dataset.stock);
+            const valid = Number.isInteger(quantity) && quantity >= 1 && quantity <= stock;
+            item.productInput.name = `items[${index}][product_id]`;
+            item.quantity.name = `items[${index}][quantity]`;
+            item.quantity.setCustomValidity(quantity > stock ? `Only ${stock} unit(s) are available.` : '');
+            item.row.classList.toggle('invalid', !valid);
+            item.minus.disabled = quantity <= 1;
+            item.plus.disabled = quantity >= stock;
+            item.lineTotal.textContent = money.format(item.price * (Number.isFinite(quantity) ? Math.max(quantity, 0) : 0));
+            total += valid ? item.price * quantity : 0;
+            units += valid ? quantity : 0;
+            invalid ||= !valid;
+        });
+
+        const count = cart.size;
+        cartEmpty.hidden = count > 0;
+        cartCount.textContent = count.toLocaleString();
+        productCount.textContent = count.toLocaleString();
+        unitCount.textContent = units.toLocaleString();
+        mobileCount.textContent = count.toLocaleString();
+        totalPreview.textContent = money.format(total);
+        mobileTotal.textContent = money.format(total);
+        submit.disabled = count === 0 || invalid;
+    };
+
+    const removeProduct = (productId) => {
+        const item = cart.get(productId);
+        if (!item) return;
+        item.row.remove();
+        item.card.classList.remove('selected');
+        item.card.setAttribute('aria-pressed', 'false');
+        cart.delete(productId);
+        updateCart();
+    };
+
+    const addProduct = (card, initialQuantity = 1) => {
+        const productId = card.dataset.productId;
+        if (cart.has(productId)) {
+            removeProduct(productId);
             return;
         }
 
-        const price = Number(selected.dataset.price || 0);
-        const qty = Math.max(0, Number(quantity.value || 0));
-        const card = selected.closest('[data-product-card]');
-        selectedEmpty.hidden = true;
-        selectedItem.hidden = false;
-        selectedName.textContent = selected.dataset.name;
-        selectedImage.src = card.querySelector('img').src;
-        unitPrice.textContent = money.format(price);
-        stockPreview.textContent = `${Number(selected.dataset.stock).toLocaleString()} units`;
-        totalPreview.textContent = money.format(price * qty);
-        mobileTotal.textContent = money.format(price * qty);
-        submit.disabled = qty < 1;
+        const row = cartTemplate.content.firstElementChild.cloneNode(true);
+        const quantity = row.querySelector('[data-cart-quantity]');
+        const productInput = row.querySelector('[data-cart-product-input]');
+        const price = Number(card.dataset.price);
+        const stock = Number(card.dataset.stock);
+        row.querySelector('[data-cart-image]').src = card.dataset.image;
+        row.querySelector('[data-cart-name]').textContent = card.dataset.name;
+        row.querySelector('[data-cart-unit-price]').textContent = money.format(price);
+        row.querySelector('[data-cart-stock]').textContent = stock.toLocaleString();
+        row.querySelector('[data-cart-remove]').setAttribute('aria-label', `Remove ${card.dataset.name}`);
+        productInput.value = productId;
+        quantity.value = initialQuantity;
+        quantity.max = stock;
+
+        const item = {
+            card,
+            row,
+            price,
+            quantity,
+            productInput,
+            lineTotal: row.querySelector('[data-cart-line-total]'),
+            minus: row.querySelector('[data-quantity-minus]'),
+            plus: row.querySelector('[data-quantity-plus]'),
+        };
+        cart.set(productId, item);
+        cartList.append(row);
+        card.classList.add('selected');
+        card.setAttribute('aria-pressed', 'true');
+
+        row.querySelector('[data-cart-remove]').addEventListener('click', () => removeProduct(productId));
+        item.minus.addEventListener('click', () => {
+            quantity.value = Math.max(1, Number(quantity.value || 1) - 1);
+            updateCart();
+        });
+        item.plus.addEventListener('click', () => {
+            quantity.value = Math.min(stock, Number(quantity.value || 0) + 1);
+            updateCart();
+        });
+        quantity.addEventListener('input', updateCart);
+        quantity.addEventListener('change', () => {
+            if (!quantity.value) quantity.value = 1;
+            updateCart();
+        });
+        updateCart();
     };
 
     const filterProducts = () => {
@@ -231,8 +300,7 @@ if (saleForm) {
         resultCount.textContent = `${visible} available`;
     };
 
-    options.forEach((option) => option.addEventListener('change', updateSale));
-    quantity.addEventListener('input', updateSale);
+    cards.forEach((card) => card.addEventListener('click', () => addProduct(card)));
     customer.addEventListener('change', updateReceiptOption);
     search.addEventListener('input', filterProducts);
     viewButtons.forEach((button) => button.addEventListener('click', () => {
@@ -249,8 +317,12 @@ if (saleForm) {
         submit.textContent = 'Completing sale…';
         submit.setAttribute('aria-busy', 'true');
     });
+    cards.forEach((card) => {
+        const initialQuantity = Number(card.dataset.initialQuantity || 0);
+        if (initialQuantity > 0) addProduct(card, initialQuantity);
+    });
     updateReceiptOption();
-    updateSale();
+    updateCart();
     if (saleForm.querySelector('.checkout-panel .field-error')) viewButtons.find((button) => button.dataset.posView === 'checkout')?.click();
 }
 

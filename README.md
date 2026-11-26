@@ -1,6 +1,6 @@
 # CaféFlow
 
-CaféFlow is a complete Laravel point-of-sale project for IT0049, designed for a modern café with drinks, food, packaged coffee, merchandise, and seasonal gifts. It manages products, customers, staff accounts, inventory-backed single-product sales, and read-only transaction history through an authenticated, responsive interface.
+CaféFlow is a complete Laravel point-of-sale project for IT0049, designed for a modern café with drinks, food, packaged coffee, merchandise, and seasonal gifts. It manages products, customers, staff accounts, inventory-backed multi-product sales, and read-only transaction history through an authenticated, responsive interface.
 
 ## Submission details
 
@@ -21,7 +21,7 @@ CaféFlow is a complete Laravel point-of-sale project for IT0049, designed for a
 - Product, customer, staff, transaction, and accountability lists limited to 10 records per page with numbered pagination
 - Case-insensitive duplicate prevention for product names, staff full names, and customer names/emails, backed by database unique indexes
 - GD-backed image validation, resize, WebP re-encoding, generated filenames, replacement cleanup, and local placeholders
-- Record Sale flow with an optional customer, server-selected staff identity, exact centavo totals, database transaction, `lockForUpdate()`, stock deduction, insufficient-stock rejection, and overflow protection
+- Multi-product cart with click-again deselection, remove controls, per-item quantities, an optional customer, exact centavo totals, atomic stock deduction, insufficient-stock rollback, and overflow protection
 - Read-only sales history with search, product/staff/date filters and transaction details
 - Optional customer receipt email after checkout, receipt resend from transaction details, and a print-ready receipt
 - Public CaféFlow landing page with smooth section navigation, cursor-reactive coffee-bean physics, a bean sign-in transition, photo-backed login hero, persistent themes, labeled collapsible navigation, animated coffee-mug loading feedback, and reduced-motion support

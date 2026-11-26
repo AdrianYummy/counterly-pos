@@ -13,7 +13,7 @@
                 <div class="empty-state"><div class="empty-icon"><x-icon name="receipt"/></div><h3>No transactions yet</h3><p>Completed sales will appear here.</p><a class="button primary" href="{{ route('sales.create') }}">Open Point of Sale</a></div>
             @else
                 <div class="table-wrap"><table><thead><tr><th>Reference</th><th>Product</th><th>Customer</th><th>Cashier</th><th>Qty</th><th>Total</th></tr></thead><tbody>
-                @foreach($recentSales as $sale)<tr><td><a href="{{ route('sales.show', $sale) }}">{{ $sale->publicReference() }}</a><small>{{ $sale->created_at->timezone(config('counterly.display_timezone'))->format('g:i A') }}</small></td><td>{{ $sale->product->name }}</td><td>{{ $sale->customer?->full_name ?? 'Walk-in Customer' }}</td><td>{{ $sale->staff->full_name }}</td><td>{{ $sale->quantity }}</td><td><strong>₱{{ number_format((float) $sale->total_price, 2) }}</strong></td></tr>@endforeach
+                @foreach($recentSales as $sale)<tr><td><a href="{{ route('sales.show', $sale) }}">{{ $sale->transactionReference() }}</a><small>{{ $sale->created_at->timezone(config('counterly.display_timezone'))->format('g:i A') }}</small></td><td>{{ $sale->product->name }}</td><td>{{ $sale->customer?->full_name ?? 'Walk-in Customer' }}</td><td>{{ $sale->staff->full_name }}</td><td>{{ $sale->quantity }}</td><td><strong>₱{{ number_format((float) $sale->total_price, 2) }}</strong></td></tr>@endforeach
                 </tbody></table></div>
             @endif
         </section>
