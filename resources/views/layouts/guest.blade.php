@@ -9,7 +9,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="guest-body">
-    <div class="page-loader" aria-hidden="true"><span></span></div>
+    <x-page-loader/>
     <button class="icon-button guest-theme theme-toggle" type="button" aria-label="Switch to dark mode" title="Toggle dark mode" data-theme-toggle><x-icon name="moon" class="theme-moon"/><x-icon name="sun" class="theme-sun"/></button>
     <main class="login-shell page-enter">
         <section class="login-intro">

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StaffRequest;
+use App\Models\ActivityLog;
 use App\Models\User;
 use App\Services\ImageService;
 use Illuminate\Database\QueryException;
@@ -25,8 +26,10 @@ class StaffController extends Controller
                 ->orWhere('full_name', 'like', '%'.$search.'%')
                 ->orWhere('email', 'like', '%'.$search.'%')))
             ->orderBy('id')->paginate(10)->withQueryString();
+        $searchSuggestions = User::query()->orderBy('full_name')->limit(100)->get(['full_name', 'username', 'email'])
+            ->flatMap(fn (User $user) => [$user->full_name, $user->username, $user->email])->unique()->values();
 
-        return view('staff.index', compact('staffMembers', 'search'));
+        return view('staff.index', compact('staffMembers', 'search', 'searchSuggestions'));
     }
 
     public function create(): View
@@ -40,7 +43,17 @@ class StaffController extends Controller
         if ($request->hasFile('avatar')) {
             $data['avatar'] = $this->images->store($request->file('avatar'), 'avatars', 600, 600);
         }
-        $staff = User::create($data);
+        try {
+            $staff = DB::transaction(function () use ($request, $data) {
+                $staff = User::create($data);
+                ActivityLog::recordCreation($request->user(), 'staff', $staff->public_id, $staff->full_name, $this->auditValues($staff));
+
+                return $staff;
+            });
+        } catch (\Throwable $exception) {
+            $this->images->delete($data['avatar'] ?? null);
+            throw $exception;
+        }
 
         return redirect()->route('staff.show', $staff)->with('success', 'Staff account created successfully.');
     }
@@ -60,8 +73,10 @@ class StaffController extends Controller
     public function update(StaffRequest $request, User $staff): RedirectResponse
     {
         $newAvatar = $request->hasFile('avatar') ? $this->images->store($request->file('avatar'), 'avatars', 600, 600) : null;
+        $before = $this->auditValues($staff);
         $data = $request->safe()->only(['username', 'email', 'full_name', 'role']);
-        if (filled($request->validated('password'))) {
+        $passwordChanged = filled($request->validated('password'));
+        if ($passwordChanged) {
             $data['password'] = $request->validated('password');
         }
         if ($newAvatar) {
@@ -69,7 +84,7 @@ class StaffController extends Controller
         }
         $oldAvatar = $staff->avatar;
         try {
-            DB::transaction(function () use ($staff, $data) {
+            DB::transaction(function () use ($request, $staff, $data, $before, $passwordChanged) {
                 $staffMembers = User::query()->lockForUpdate()->get(['id', 'role']);
                 /** @var User $locked */
                 $locked = $staffMembers->firstWhere('id', $staff->id) ?? abort(404);
@@ -77,6 +92,18 @@ class StaffController extends Controller
                     throw ValidationException::withMessages(['role' => 'At least one administrator account must remain.']);
                 }
                 $locked->update($data);
+                $locked->refresh();
+                $after = $this->auditValues($locked);
+
+                ActivityLog::recordEdit(
+                    $request->user(),
+                    'staff',
+                    $locked->public_id,
+                    $locked->full_name,
+                    $before,
+                    $after,
+                    $passwordChanged ? ['password' => ['from' => 'Protected', 'to' => 'Updated securely']] : [],
+                );
             });
         } catch (\Throwable $exception) {
             $this->images->delete($newAvatar);
@@ -96,7 +123,7 @@ class StaffController extends Controller
         }
 
         try {
-            $avatar = DB::transaction(function () use ($staff) {
+            $avatar = DB::transaction(function () use ($request, $staff) {
                 User::query()->lockForUpdate()->get(['id']);
                 if (User::count() <= 1) {
                     throw new \LogicException('The last staff account cannot be deleted.');
@@ -108,7 +135,10 @@ class StaffController extends Controller
                     throw new \DomainException('This staff account is used in sales history and cannot be deleted.');
                 }
                 $avatar = $staff->avatar;
+                $publicId = $staff->public_id;
+                $name = $staff->full_name;
                 $staff->delete();
+                ActivityLog::recordDeletion($request->user(), 'staff', $publicId, $name);
 
                 return $avatar;
             });
@@ -120,5 +150,16 @@ class StaffController extends Controller
         }
 
         return redirect()->route('staff.index')->with('success', 'Staff account deleted successfully.');
+    }
+
+    private function auditValues(User $staff): array
+    {
+        return [
+            'username' => $staff->username,
+            'email' => $staff->email,
+            'full_name' => $staff->full_name,
+            'role' => $staff->role,
+            'avatar' => $staff->avatar ? 'Custom avatar' : 'Default avatar',
+        ];
     }
 }

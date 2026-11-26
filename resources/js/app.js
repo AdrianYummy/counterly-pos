@@ -1,6 +1,7 @@
 import './bootstrap';
 
 const root = document.documentElement;
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const updateThemeControls = () => {
     const dark = root.dataset.theme === 'dark';
     document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
@@ -17,9 +18,8 @@ document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
 });
 updateThemeControls();
 
-if (localStorage.getItem('cafeflow-sidebar') === 'collapsed') document.body.classList.add('sidebar-collapsed');
 document.querySelector('[data-sidebar-toggle]')?.addEventListener('click', () => {
-    const collapsed = document.body.classList.toggle('sidebar-collapsed');
+    const collapsed = root.classList.toggle('sidebar-collapsed');
     localStorage.setItem('cafeflow-sidebar', collapsed ? 'collapsed' : 'expanded');
 });
 
@@ -27,12 +27,12 @@ const startLoading = () => document.body.classList.add('is-loading');
 window.addEventListener('pageshow', () => document.body.classList.remove('is-loading'));
 document.addEventListener('click', (event) => {
     const link = event.target.closest('a[href]');
-    if (!link || link.target === '_blank' || link.hasAttribute('download')) return;
+    if (!link || link.target === '_blank' || link.hasAttribute('download') || link.hasAttribute('data-bean-transition')) return;
     const url = new URL(link.href, window.location.href);
     if (url.origin === window.location.origin && url.href !== window.location.href && !url.hash) startLoading();
 });
 document.addEventListener('submit', (event) => {
-    if (!event.defaultPrevented && event.target.checkValidity()) startLoading();
+    if (!event.defaultPrevented && !event.target.matches('[data-confirm]') && event.target.checkValidity()) startLoading();
 });
 
 const menuButton = document.querySelector('.menu-toggle');
@@ -48,6 +48,7 @@ document.querySelectorAll('form[data-confirm]').forEach((form) => {
     form.addEventListener('submit', (event) => {
         if (!confirmDialog) return;
         event.preventDefault();
+        document.body.classList.remove('is-loading');
         pendingForm = form;
         confirmDialog.querySelector('[data-confirm-message]').textContent = form.dataset.confirm;
         confirmDialog.showModal();
@@ -58,6 +59,7 @@ confirmDialog?.addEventListener('close', () => {
         startLoading();
         pendingForm.submit();
     }
+    if (confirmDialog.returnValue !== 'confirm') document.body.classList.remove('is-loading');
     pendingForm = null;
 });
 
@@ -161,3 +163,136 @@ if (saleForm) {
 }
 
 document.querySelector('[data-print]')?.addEventListener('click', () => window.print());
+
+document.querySelectorAll('.landing-body a[href^="#"]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+        const target = document.getElementById(link.hash.slice(1));
+        if (!target) return;
+        event.preventDefault();
+        target.scrollIntoView({ behavior: reducedMotion.matches ? 'auto' : 'smooth', block: 'start' });
+        window.history.replaceState(null, '', link.hash);
+    });
+});
+
+const beanTransitionLayer = document.querySelector('[data-bean-transition-layer]');
+let beanTransitioning = false;
+document.querySelectorAll('[data-bean-transition]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || beanTransitioning) return;
+        if (reducedMotion.matches) {
+            startLoading();
+            return;
+        }
+
+        event.preventDefault();
+        beanTransitioning = true;
+        const destination = link.href;
+        const transitionBean = beanTransitionLayer?.querySelector('.transition-bean');
+        document.body.classList.add('bean-transitioning');
+
+        let finished = false;
+        const navigate = () => {
+            if (finished) return;
+            finished = true;
+            window.location.assign(destination);
+        };
+        transitionBean?.addEventListener('animationend', navigate, { once: true });
+        window.setTimeout(navigate, 1100);
+    });
+});
+window.addEventListener('pageshow', () => {
+    beanTransitioning = false;
+    document.body.classList.remove('bean-transitioning');
+});
+
+const beanField = document.querySelector('[data-bean-field]');
+if (beanField) {
+    const total = window.innerWidth < 700 ? 9 : 16;
+    let seed = 724225;
+    const random = () => {
+        seed = (seed * 16807) % 2147483647;
+        return (seed - 1) / 2147483646;
+    };
+    const particles = Array.from({ length: total }, (_, index) => {
+        const element = document.createElement('i');
+        element.className = 'ambient-bean';
+        const size = 15 + random() * 22;
+        const particle = {
+            element,
+            nx: random(),
+            ny: random(),
+            x: 0,
+            y: 0,
+            vx: 0,
+            vy: 0,
+            angle: random() * 360,
+            phase: random() * Math.PI * 2,
+            depth: 0.55 + random() * 0.75,
+            index,
+        };
+        element.style.setProperty('--bean-size', `${size}px`);
+        element.style.setProperty('--bean-opacity', String(0.1 + particle.depth * 0.08));
+        beanField.appendChild(element);
+        return particle;
+    });
+    const pointer = { x: 0, y: 0, lastX: 0, lastY: 0, vx: 0, vy: 0, active: false };
+
+    const placeParticles = () => {
+        particles.forEach((particle) => {
+            if (particle.x === 0 && particle.y === 0) {
+                particle.x = particle.nx * window.innerWidth;
+                particle.y = particle.ny * window.innerHeight;
+            }
+            particle.element.style.transform = `translate3d(${particle.x}px, ${particle.y}px, 0) rotate(${particle.angle}deg)`;
+        });
+    };
+    placeParticles();
+
+    window.addEventListener('pointermove', (event) => {
+        const wasActive = pointer.active;
+        pointer.vx = wasActive ? event.clientX - pointer.lastX : 0;
+        pointer.vy = wasActive ? event.clientY - pointer.lastY : 0;
+        pointer.lastX = event.clientX;
+        pointer.lastY = event.clientY;
+        pointer.x = event.clientX;
+        pointer.y = event.clientY;
+        pointer.active = event.pointerType === 'mouse' || event.pointerType === 'pen';
+    }, { passive: true });
+    document.documentElement.addEventListener('mouseleave', () => { pointer.active = false; });
+    window.addEventListener('resize', placeParticles, { passive: true });
+
+    if (!reducedMotion.matches) {
+        const animateBeans = (time) => {
+            particles.forEach((particle) => {
+                const homeX = particle.nx * window.innerWidth + Math.sin(time * 0.00035 + particle.phase) * 11 * particle.depth;
+                const homeY = particle.ny * window.innerHeight + Math.cos(time * 0.00028 + particle.phase) * 8 * particle.depth;
+                particle.vx += (homeX - particle.x) * 0.0022;
+                particle.vy += (homeY - particle.y) * 0.0022;
+
+                if (pointer.active) {
+                    const dx = pointer.x - particle.x;
+                    const dy = pointer.y - particle.y;
+                    const distance = Math.hypot(dx, dy) || 1;
+                    if (distance < 190) {
+                        const influence = (1 - distance / 190) * particle.depth;
+                        particle.vx -= (dx / distance) * influence * 0.32;
+                        particle.vy -= (dy / distance) * influence * 0.32;
+                        particle.vx += pointer.vx * influence * 0.032;
+                        particle.vy += pointer.vy * influence * 0.032;
+                    }
+                }
+
+                particle.vx *= 0.945;
+                particle.vy *= 0.945;
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.angle += particle.vx * 0.16 + 0.035 * particle.depth;
+                particle.element.style.transform = `translate3d(${particle.x}px, ${particle.y}px, 0) rotate(${particle.angle}deg)`;
+            });
+            pointer.vx *= 0.82;
+            pointer.vy *= 0.82;
+            window.requestAnimationFrame(animateBeans);
+        };
+        window.requestAnimationFrame(animateBeans);
+    }
+}

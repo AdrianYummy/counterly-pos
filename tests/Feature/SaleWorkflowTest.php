@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
@@ -44,6 +45,11 @@ class SaleWorkflowTest extends TestCase
             'quantity' => 3,
             'total_price' => 75,
         ]);
+        $stockLog = ActivityLog::where('subject_type', 'product')->where('action', 'sold')->firstOrFail();
+        $this->assertSame($this->staff->id, $stockLog->actor_id);
+        $this->assertSame('10', $stockLog->changes['stock_quantity']['from']);
+        $this->assertSame('7', $stockLog->changes['stock_quantity']['to']);
+        $this->assertSame('3', $stockLog->changes['quantity_sold']['to']);
     }
 
     public function test_insufficient_stock_rejects_sale_without_any_write(): void

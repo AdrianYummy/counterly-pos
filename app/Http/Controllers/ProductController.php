@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProductRequest;
+use App\Models\ActivityLog;
 use App\Models\Product;
 use App\Services\ImageService;
 use Illuminate\Database\QueryException;
@@ -23,8 +24,9 @@ class ProductController extends Controller
         $products = Product::query()
             ->when($search, fn ($query) => $query->where('name', 'like', '%'.$search.'%'))
             ->orderBy('id')->paginate(10)->withQueryString();
+        $searchSuggestions = Product::query()->orderBy('name')->limit(100)->pluck('name');
 
-        return view('products.index', compact('products', 'search'));
+        return view('products.index', compact('products', 'search', 'searchSuggestions'));
     }
 
     public function create(): View
@@ -38,7 +40,17 @@ class ProductController extends Controller
         if ($request->hasFile('image')) {
             $data['image'] = $this->images->store($request->file('image'), 'products');
         }
-        $product = Product::create($data);
+        try {
+            $product = DB::transaction(function () use ($request, $data) {
+                $product = Product::create($data);
+                ActivityLog::recordCreation($request->user(), 'product', $product->public_id, $product->name, $this->auditValues($product));
+
+                return $product;
+            });
+        } catch (\Throwable $exception) {
+            $this->images->delete($data['image'] ?? null);
+            throw $exception;
+        }
 
         return redirect()->route('products.show', $product)->with('success', 'Product created successfully.');
     }
@@ -69,11 +81,14 @@ class ProductController extends Controller
                         'stock_quantity' => 'Stock changed while this form was open. Reload the page before changing stock.',
                     ]);
                 }
+                $before = $this->auditValues($locked);
                 $data = $request->safe()->only(['name', 'price', 'stock_quantity']);
                 if ($newImage) {
                     $data['image'] = $newImage;
                 }
                 $locked->update($data);
+                $locked->refresh();
+                ActivityLog::recordEdit($request->user(), 'product', $locked->public_id, $locked->name, $before, $this->auditValues($locked));
             });
         } catch (\Throwable $exception) {
             if ($newImage) {
@@ -89,19 +104,36 @@ class ProductController extends Controller
         return redirect()->route('products.show', $product)->with('success', 'Product updated successfully.');
     }
 
-    public function destroy(Product $product): RedirectResponse
+    public function destroy(Request $request, Product $product): RedirectResponse
     {
         if ($product->sales()->exists()) {
             return back()->with('error', 'This product is used in sales history and cannot be deleted.');
         }
         try {
-            $path = $product->image;
-            $product->delete();
+            $path = DB::transaction(function () use ($request, $product) {
+                $path = $product->image;
+                $publicId = $product->public_id;
+                $name = $product->name;
+                $product->delete();
+                ActivityLog::recordDeletion($request->user(), 'product', $publicId, $name);
+
+                return $path;
+            });
             $this->images->delete($path);
         } catch (QueryException) {
             return back()->with('error', 'This product became referenced by a sale and cannot be deleted.');
         }
 
         return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
+    }
+
+    private function auditValues(Product $product): array
+    {
+        return [
+            'name' => $product->name,
+            'price' => $product->price,
+            'stock_quantity' => $product->stock_quantity,
+            'image' => $product->image ? 'Custom image' : 'Default image',
+        ];
     }
 }

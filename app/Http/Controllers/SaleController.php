@@ -39,13 +39,18 @@ class SaleController extends Controller
             ->when($data['staff_id'] ?? null, fn ($query, $publicId) => $query->whereHas('staff', fn ($staff) => $staff->where('public_id', $publicId)))
             ->when($data['date_from'] ?? null, fn ($query, $date) => $query->where('created_at', '>=', CarbonImmutable::parse($date, $timezone)->startOfDay()->utc()))
             ->when($data['date_to'] ?? null, fn ($query, $date) => $query->where('created_at', '<', CarbonImmutable::parse($date, $timezone)->addDay()->startOfDay()->utc()))
-            ->latest('created_at')->latest('id')->paginate(15)->withQueryString();
+            ->latest('created_at')->latest('id')->paginate(10)->withQueryString();
 
         return view('sales.index', [
             'sales' => $sales,
             'filters' => $data,
             'products' => Product::orderBy('name')->get(['id', 'public_id', 'name']),
             'staffMembers' => User::orderBy('full_name')->get(['id', 'public_id', 'full_name']),
+            'searchSuggestions' => collect()
+                ->merge(Product::orderBy('name')->limit(50)->pluck('name'))
+                ->merge(Customer::orderBy('full_name')->limit(50)->pluck('full_name'))
+                ->merge(User::orderBy('full_name')->limit(50)->pluck('full_name'))
+                ->unique()->values(),
         ]);
     }
 

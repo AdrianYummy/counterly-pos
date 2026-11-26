@@ -15,14 +15,15 @@ CaféFlow is a complete Laravel point-of-sale project for IT0049, designed for a
 
 - Username/password staff login, throttled failures, session regeneration, POST logout, and authentication on every management route
 - Secure email-based password recovery with expiring, throttled, single-use reset tokens and non-enumerating responses
-- Live dashboard counts, Asia/Manila daily sales total, recent sales, and low-stock list
+- Live dashboard counts, Asia/Manila daily sales total, recent sales, low-stock list, and field-level accountability for product, stock, sale-driven stock, customer, and staff changes
 - Role-based access with administrator and cashier accounts; administrator-only staff management, inventory changes, and customer deletion are enforced by middleware
-- Product, customer, and staff CRUD with validation, search, pagination, detail pages, and protected deletion
+- Product, customer, staff, transaction, and accountability lists limited to 10 records per page with numbered pagination
+- Case-insensitive duplicate prevention for product names, staff full names, and customer names/emails, backed by database unique indexes
 - GD-backed image validation, resize, WebP re-encoding, generated filenames, replacement cleanup, and local placeholders
 - Record Sale flow with an optional customer, server-selected staff identity, exact centavo totals, database transaction, `lockForUpdate()`, stock deduction, insufficient-stock rejection, and overflow protection
 - Read-only sales history with search, product/staff/date filters and transaction details
 - Optional customer receipt email after checkout, receipt resend from transaction details, and a print-ready receipt
-- Public CaféFlow landing page, clickable café emblem, persistent light/dark themes, collapsible navigation, refined loading feedback, and reduced-motion support
+- Public CaféFlow landing page with smooth section navigation, cursor-reactive coffee-bean physics, a bean sign-in transition, photo-backed login hero, persistent themes, labeled collapsible navigation, animated coffee-mug loading feedback, and reduced-motion support
 - Stale-stock detection so an open product edit cannot undo a newer sale
 - Restrictive foreign keys; transaction history blocks deletion of referenced products, customers, or staff
 - Current-account, final-staff, and final-administrator safeguards
@@ -133,7 +134,7 @@ composer check-platform-reqs
 npm run build
 ```
 
-The latest local run passed **28 tests / 141 assertions**, the Vite production build, Composer platform checks, MariaDB migrations/seeders, and authenticated HTTP smoke checks. See [docs/TESTING.md](docs/TESTING.md) for executed versus pending checks.
+The latest local run passed **35 tests / 253 assertions**, the Vite production build, Composer platform checks, MariaDB migrations/seeders, and authenticated HTTP smoke checks. See [docs/TESTING.md](docs/TESTING.md) for executed versus pending checks.
 
 Additional guides:
 

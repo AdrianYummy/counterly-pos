@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ActivityLog;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
@@ -29,15 +30,20 @@ class SaleService
             }
 
             $totalCents = $priceCents * $quantity;
+            $beforeStock = $product->stock_quantity;
             $product->decrement('stock_quantity', $quantity);
+            $product->refresh();
 
-            return Sale::create([
+            $sale = Sale::create([
                 'product_id' => $product->id,
                 'customer_id' => $customerId,
                 'sold_by' => $staff->id,
                 'quantity' => $quantity,
                 'total_price' => sprintf('%d.%02d', intdiv($totalCents, 100), $totalCents % 100),
             ]);
+            ActivityLog::recordStockSale($staff, $product, $sale, $beforeStock);
+
+            return $sale;
         }, 3);
     }
 

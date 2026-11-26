@@ -7,7 +7,8 @@
             <div class="pos-mobile-tabs" aria-label="Point of sale sections"><button class="active" type="button" data-pos-view="products" aria-pressed="true">Products</button><button type="button" data-pos-view="checkout" aria-pressed="false">Sale details · <span data-mobile-total>₱0.00</span></button></div>
             <section class="pos-catalog" aria-labelledby="product-catalog-title">
                 <div class="workspace-heading"><div><p class="eyebrow">Product selection</p><h2 id="product-catalog-title">Choose a product</h2><p>One product type is recorded per transaction.</p></div><span class="result-count" data-result-count>{{ $products->count() }} available</span></div>
-                <label class="catalog-search" for="pos-product-search"><x-icon name="search"/><span class="sr-only">Search products</span><input id="pos-product-search" type="search" placeholder="Search products by name" autocomplete="off" data-product-search></label>
+                <label class="catalog-search" for="pos-product-search"><x-icon name="search"/><span class="sr-only">Search products</span><input id="pos-product-search" type="search" placeholder="Search products by name" list="pos-product-suggestions" autocomplete="off" data-product-search></label>
+                <datalist id="pos-product-suggestions">@foreach($products as $product)<option value="{{ $product->name }}">@endforeach</datalist>
                 @error('product_id')<span class="field-error block-error">{{ $message }}</span>@enderror
                 <div class="product-grid" data-product-grid>
                     @foreach($products as $product)

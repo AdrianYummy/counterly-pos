@@ -1,10 +1,17 @@
 <div class="form-grid">
+    <div class="media-editor avatar-editor span-2">
+        <div class="image-preview avatar"><img id="avatar-preview" src="{{ isset($staff) && $staff->avatar ? asset('storage/'.$staff->avatar) : asset('images/avatar-placeholder.svg') }}" alt="Avatar preview"></div>
+        <div class="media-editor-body">
+            <p class="eyebrow">Profile photo</p>
+            <h3>{{ isset($staff) ? 'Update the staff avatar' : 'Add a staff avatar' }}</h3>
+            <p>Use a clear headshot so staff accounts are easy to identify.</p>
+            <label class="field upload-field">Choose avatar <span class="hint">Optional JPG, PNG, or WebP up to 4 MB</span><input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" data-image-input data-preview-target="avatar-preview">@error('avatar')<span class="field-error">{{ $message }}</span>@enderror</label>
+        </div>
+    </div>
     <label class="field">Username<input name="username" value="{{ old('username', $staff->username ?? '') }}" minlength="3" maxlength="50" pattern="[A-Za-z0-9._-]+" autocomplete="off" required>@error('username')<span class="field-error">{{ $message }}</span>@enderror</label>
     <label class="field">Email address <span class="hint">Used for secure password recovery.</span><input type="email" name="email" value="{{ old('email', $staff->email ?? '') }}" maxlength="150" autocomplete="email" required>@error('email')<span class="field-error">{{ $message }}</span>@enderror</label>
     <label class="field">Full name<input name="full_name" value="{{ old('full_name', $staff->full_name ?? '') }}" maxlength="100" required>@error('full_name')<span class="field-error">{{ $message }}</span>@enderror</label>
     <label class="field">Role<select name="role" required><option value="cashier" @selected(old('role', $staff->role ?? 'cashier') === 'cashier')>Cashier</option><option value="admin" @selected(old('role', $staff->role ?? '') === 'admin')>Administrator</option></select>@error('role')<span class="field-error">{{ $message }}</span>@enderror</label>
     <label class="field">Password <span class="hint">@isset($staff)Leave blank to keep it. @endisset Use 10+ characters with uppercase, lowercase, number, and symbol.</span><input type="password" name="password" minlength="10" maxlength="72" autocomplete="new-password" @empty($staff) required @endempty>@error('password')<span class="field-error">{{ $message }}</span>@enderror</label>
     <label class="field">Confirm password<input type="password" name="password_confirmation" minlength="10" maxlength="72" autocomplete="new-password" @empty($staff) required @endempty></label>
-    <label class="field span-2">Avatar <span class="hint">Optional JPG, PNG, or WebP up to 4 MB</span><input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" data-image-input data-preview-target="avatar-preview">@error('avatar')<span class="field-error">{{ $message }}</span>@enderror</label>
-    <div class="image-preview avatar span-2"><img id="avatar-preview" src="{{ isset($staff) && $staff->avatar ? asset('storage/'.$staff->avatar) : asset('images/avatar-placeholder.svg') }}" alt="Avatar preview"></div>
 </div><div class="form-actions"><a class="button secondary" href="{{ isset($staff) ? route('staff.show', $staff) : route('staff.index') }}">Cancel</a><button class="button primary">{{ $submitLabel }}</button></div>

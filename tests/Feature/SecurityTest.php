@@ -144,11 +144,37 @@ class SecurityTest extends TestCase
             ->assertSee('New product');
     }
 
+    public function test_search_suggestions_and_icon_actions_respect_roles(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $cashier = User::factory()->create(['role' => 'cashier']);
+        Product::create(['name' => 'Suggested Latte', 'price' => '125.00', 'stock_quantity' => 8]);
+
+        $this->actingAs($admin)->get(route('products.index'))
+            ->assertOk()
+            ->assertSee('product-suggestions', false)
+            ->assertSee('value="Suggested Latte"', false)
+            ->assertSee('aria-label="View Suggested Latte"', false)
+            ->assertSee('aria-label="Edit Suggested Latte"', false)
+            ->assertSee('aria-label="Delete Suggested Latte"', false);
+
+        $this->actingAs($cashier)->get(route('products.index'))
+            ->assertOk()
+            ->assertSee('aria-label="View Suggested Latte"', false)
+            ->assertDontSee('aria-label="Edit Suggested Latte"', false)
+            ->assertDontSee('aria-label="Delete Suggested Latte"', false);
+    }
+
     public function test_public_hero_uses_cafeflow_brand_and_logo(): void
     {
         $this->get('/')
             ->assertOk()
             ->assertSee('CaféFlow')
-            ->assertSee('images/cafeflow-logo.png', false);
+            ->assertSee('images/cafeflow-logo.png', false)
+            ->assertSee('href="#features"', false)
+            ->assertSee('href="#workflow"', false)
+            ->assertSee('data-bean-field', false)
+            ->assertSee('data-bean-transition', false)
+            ->assertSee('bean-page-transition', false);
     }
 }

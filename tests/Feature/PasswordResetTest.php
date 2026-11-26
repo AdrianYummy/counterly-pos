@@ -82,5 +82,11 @@ class PasswordResetTest extends TestCase
         $this->post(route('password.email'), ['email' => $user->email])
             ->assertSessionHas('success')
             ->assertSessionHas('reset_preview_url', fn ($url) => str_contains($url, '/reset-password/'));
+
+        $this->post(route('password.email'), ['email' => $user->email])
+            ->assertSessionHas('success')
+            ->assertSessionHas('reset_preview_url', fn ($url) => str_contains($url, '/reset-password/'));
+
+        Notification::assertSentToTimes($user, ResetStaffPassword::class, 2);
     }
 }

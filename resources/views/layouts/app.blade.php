@@ -6,21 +6,21 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Dashboard' }} | {{ config('app.name', 'CaféFlow') }}</title>
     <link rel="icon" href="{{ asset('images/cafeflow-logo.png') }}" type="image/png">
-    <script>document.documentElement.dataset.theme=localStorage.getItem('cafeflow-theme')||'light';</script>
+    <script>document.documentElement.dataset.theme=localStorage.getItem('cafeflow-theme')||'light';if(localStorage.getItem('cafeflow-sidebar')==='collapsed')document.documentElement.classList.add('sidebar-collapsed');</script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
-<div class="page-loader" aria-hidden="true"><span></span></div>
+<x-page-loader/>
 <div class="app-shell">
     <aside class="sidebar" id="sidebar">
-        <a class="brand" href="{{ auth()->user()->isAdmin() ? route('dashboard') : route('sales.create') }}" aria-label="CaféFlow home"><img src="{{ asset('images/cafeflow-logo.png') }}" alt=""><strong>CaféFlow</strong></a>
+        <a class="brand" href="{{ auth()->user()->isAdmin() ? route('dashboard') : route('sales.create') }}" aria-label="CaféFlow home" data-tooltip="CaféFlow home"><img src="{{ asset('images/cafeflow-logo.png') }}" alt=""><strong>CaféFlow</strong></a>
         <nav aria-label="Main navigation">
-            @if(auth()->user()->isAdmin())<a class="{{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><x-icon name="dashboard"/><span>Dashboard</span></a>@endif
-            <a class="{{ request()->routeIs('sales.create') ? 'active' : '' }}" href="{{ route('sales.create') }}"><x-icon name="cart"/><span>Point of Sale</span></a>
-            <a class="{{ request()->routeIs('products.*') ? 'active' : '' }}" href="{{ route('products.index') }}"><x-icon name="box"/><span>Products & Inventory</span></a>
-            <a class="{{ request()->routeIs('customers.*') ? 'active' : '' }}" href="{{ route('customers.index') }}"><x-icon name="users"/><span>Customers</span></a>
-            <a class="{{ request()->routeIs('sales.index', 'sales.show') ? 'active' : '' }}" href="{{ route('sales.index') }}"><x-icon name="receipt"/><span>Transactions</span></a>
-            @if(auth()->user()->isAdmin())<a class="{{ request()->routeIs('staff.*') ? 'active' : '' }}" href="{{ route('staff.index') }}"><x-icon name="staff"/><span>User Accounts</span></a>@endif
+            @if(auth()->user()->isAdmin())<a class="{{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}" data-tooltip="Dashboard"><x-icon name="dashboard"/><span>Dashboard</span></a>@endif
+            <a class="{{ request()->routeIs('sales.create') ? 'active' : '' }}" href="{{ route('sales.create') }}" data-tooltip="Point of Sale"><x-icon name="cart"/><span>Point of Sale</span></a>
+            <a class="{{ request()->routeIs('products.*') ? 'active' : '' }}" href="{{ route('products.index') }}" data-tooltip="Products & Inventory"><x-icon name="box"/><span>Products & Inventory</span></a>
+            <a class="{{ request()->routeIs('customers.*') ? 'active' : '' }}" href="{{ route('customers.index') }}" data-tooltip="Customers"><x-icon name="users"/><span>Customers</span></a>
+            <a class="{{ request()->routeIs('sales.index', 'sales.show') ? 'active' : '' }}" href="{{ route('sales.index') }}" data-tooltip="Transactions"><x-icon name="receipt"/><span>Transactions</span></a>
+            @if(auth()->user()->isAdmin())<a class="{{ request()->routeIs('staff.*') ? 'active' : '' }}" href="{{ route('staff.index') }}" data-tooltip="User Accounts"><x-icon name="staff"/><span>User Accounts</span></a>@endif
         </nav>
         <div class="sidebar-foot"><span class="status-dot"></span><span>Secure workspace</span></div>
     </aside>

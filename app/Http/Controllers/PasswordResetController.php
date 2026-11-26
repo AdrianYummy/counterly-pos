@@ -26,13 +26,16 @@ class PasswordResetController extends Controller
         $previewUrl = null;
 
         try {
-            Password::sendResetLink($data, function (User $user, string $token) use (&$previewUrl) {
-                $user->sendPasswordResetNotification($token);
-
-                if (config('counterly.mail_preview') && config('mail.default') === 'log') {
+            if (config('counterly.mail_preview') && config('mail.default') === 'log') {
+                $user = User::query()->where('email', $data['email'])->first();
+                if ($user) {
+                    $token = Password::broker()->createToken($user);
+                    $user->sendPasswordResetNotification($token);
                     $previewUrl = route('password.reset', ['token' => $token, 'email' => $user->email]);
                 }
-            });
+            } else {
+                Password::sendResetLink($data);
+            }
         } catch (\Throwable $exception) {
             report($exception);
 
