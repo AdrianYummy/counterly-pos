@@ -113,7 +113,7 @@ class SaleWorkflowTest extends TestCase
 
         Notification::assertSentTo($customer, SaleReceiptNotification::class, function (SaleReceiptNotification $notification) use ($customer) {
             $mail = $notification->toMail($customer);
-            $this->assertStringContainsString('Counterly receipt', $mail->subject);
+            $this->assertStringContainsString('CaféFlow receipt', $mail->subject);
 
             return true;
         });

@@ -25,7 +25,7 @@ class PasswordResetTest extends TestCase
         Notification::assertSentTo($user, ResetStaffPassword::class, function (ResetStaffPassword $notification) use (&$token, $user) {
             $token = $notification->token;
             $mail = $notification->toMail($user);
-            $this->assertSame('Reset your Counterly password', $mail->subject);
+            $this->assertSame('Reset your CaféFlow password', $mail->subject);
             $this->assertStringContainsString('/reset-password/'.$token, $mail->actionUrl);
 
             return true;
@@ -71,5 +71,16 @@ class PasswordResetTest extends TestCase
             'password' => 'StrongEnough123!',
             'password_confirmation' => 'StrongEnough123!',
         ])->assertSessionHasErrors('email');
+    }
+
+    public function test_local_log_mailer_provides_a_safe_reset_preview_link(): void
+    {
+        Notification::fake();
+        config(['mail.default' => 'log', 'counterly.mail_preview' => true]);
+        $user = User::factory()->create(['email' => 'preview@example.test']);
+
+        $this->post(route('password.email'), ['email' => $user->email])
+            ->assertSessionHas('success')
+            ->assertSessionHas('reset_preview_url', fn ($url) => str_contains($url, '/reset-password/'));
     }
 }

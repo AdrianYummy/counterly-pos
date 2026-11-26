@@ -1,5 +1,40 @@
 import './bootstrap';
 
+const root = document.documentElement;
+const updateThemeControls = () => {
+    const dark = root.dataset.theme === 'dark';
+    document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+        button.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+    });
+};
+document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+    button.addEventListener('click', () => {
+        const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+        root.dataset.theme = next;
+        localStorage.setItem('cafeflow-theme', next);
+        updateThemeControls();
+    });
+});
+updateThemeControls();
+
+if (localStorage.getItem('cafeflow-sidebar') === 'collapsed') document.body.classList.add('sidebar-collapsed');
+document.querySelector('[data-sidebar-toggle]')?.addEventListener('click', () => {
+    const collapsed = document.body.classList.toggle('sidebar-collapsed');
+    localStorage.setItem('cafeflow-sidebar', collapsed ? 'collapsed' : 'expanded');
+});
+
+const startLoading = () => document.body.classList.add('is-loading');
+window.addEventListener('pageshow', () => document.body.classList.remove('is-loading'));
+document.addEventListener('click', (event) => {
+    const link = event.target.closest('a[href]');
+    if (!link || link.target === '_blank' || link.hasAttribute('download')) return;
+    const url = new URL(link.href, window.location.href);
+    if (url.origin === window.location.origin && url.href !== window.location.href && !url.hash) startLoading();
+});
+document.addEventListener('submit', (event) => {
+    if (!event.defaultPrevented && event.target.checkValidity()) startLoading();
+});
+
 const menuButton = document.querySelector('.menu-toggle');
 const sidebar = document.querySelector('#sidebar');
 menuButton?.addEventListener('click', () => {
@@ -19,7 +54,10 @@ document.querySelectorAll('form[data-confirm]').forEach((form) => {
     });
 });
 confirmDialog?.addEventListener('close', () => {
-    if (confirmDialog.returnValue === 'confirm' && pendingForm) pendingForm.submit();
+    if (confirmDialog.returnValue === 'confirm' && pendingForm) {
+        startLoading();
+        pendingForm.submit();
+    }
     pendingForm = null;
 });
 

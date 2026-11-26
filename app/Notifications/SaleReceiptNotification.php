@@ -23,7 +23,7 @@ class SaleReceiptNotification extends Notification
         $sale = $this->sale->loadMissing(['product', 'staff']);
 
         return (new MailMessage)
-            ->subject('Your Counterly receipt '.$sale->publicReference())
+            ->subject('Your CaféFlow receipt '.$sale->publicReference())
             ->greeting('Hello '.$notifiable->full_name.',')
             ->line('Thank you. Your purchase was recorded successfully.')
             ->line('Receipt reference: '.$sale->publicReference())
@@ -32,6 +32,6 @@ class SaleReceiptNotification extends Notification
             ->line('Total: PHP '.number_format((float) $sale->total_price, 2))
             ->line('Cashier: '.$sale->staff->full_name)
             ->line('Purchased on '.$sale->created_at->timezone(config('counterly.display_timezone'))->format('F j, Y, g:i A').' PHT.')
-            ->salutation('Counterly POS');
+            ->salutation('CaféFlow');
     }
 }

@@ -134,4 +134,21 @@ class SecurityTest extends TestCase
             ->assertHeader('Permissions-Policy', 'camera=(), geolocation=(), microphone=()')
             ->assertHeader('Cross-Origin-Opener-Policy', 'same-origin');
     }
+
+    public function test_add_product_route_is_not_captured_as_a_product_identifier(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->get('/products/create')
+            ->assertOk()
+            ->assertSee('New product');
+    }
+
+    public function test_public_hero_uses_cafeflow_brand_and_logo(): void
+    {
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('CaféFlow')
+            ->assertSee('images/cafeflow-logo.png', false);
+    }
 }

@@ -1,5 +1,5 @@
 <x-layouts.guest title="Staff Login">
-    <div class="auth-heading"><p class="eyebrow">Welcome back</p><h2>Staff sign in</h2><p>Use your assigned Counterly credentials.</p></div>
+    <div class="auth-heading"><p class="eyebrow">Welcome back</p><h2>Sign in to your shift</h2><p>Enter the username and password assigned to your CaféFlow staff account.</p></div>
     @if(session('success'))<div class="alert success" role="status">{{ session('success') }}</div>@endif
     @if($errors->any())<div class="alert danger" role="alert">{{ $errors->first() }}</div>@endif
     <form method="POST" action="{{ route('login.store') }}" class="form-stack">

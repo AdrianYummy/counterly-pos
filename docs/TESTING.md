@@ -5,7 +5,7 @@ Run date: 2026-11-26 (Asia/Manila)
 | Check | Setup / expected result | Actual result | Status |
 | --- | --- | --- | --- |
 | Framework routes | `php artisan route:list`; management routes must use auth group | 38 expected application/framework routes listed; required resources present | Pass |
-| Automated suite | In-memory SQLite isolation; no development/production records | 25 tests, 134 assertions | Pass |
+| Automated suite | In-memory SQLite isolation; no development/production records | 28 tests, 141 assertions | Pass |
 | MariaDB install | Existing `counterly_pos` on MariaDB 10.4.32; apply migrations | Users received recovery emails; password token table created; existing data preserved | Pass |
 | Logged-out access | GET and POST management requests must not mutate data | Feature test redirects both and confirms no inserted product | Pass |
 | Login/logout | Correct username works; wrong password fails; logout clears auth | Automated feature test passed | Pass |
@@ -19,6 +19,9 @@ Run date: 2026-11-26 (Asia/Manila)
 | Password recovery | Request link, open reset form, submit token and strong password | Notification sent, hash replaced, token consumed; unknown email remained undisclosed | Pass |
 | Customer receipt email | Named, walk-in, and resend paths with notification fake | Named customer notified; walk-in skipped; detail-page resend notified | Pass |
 | UI production build | `npm run build` after green design/POS redesign | Vite built current CSS and JavaScript into `public/build` | Pass |
+| Add Product route | Administrator requests `/products/create` | Static create route returned 200 instead of being captured as a product UUID | Pass |
+| CaféFlow hero/branding | Public landing page, supplied logo, current production assets | Hero returned 200; logo, theme control, and current asset hashes rendered | Pass |
+| Local reset preview | Log mailer with preview enabled | Valid request displayed a working development-only reset link | Pass |
 | Real SMTP inbox delivery | Valid provider credentials and real staff/customer addresses | No external SMTP credentials supplied; log mailer remains the safe local default | Pending |
 | Named sale/tampering | Stock 10, ₱25, qty 3; client seller/total ignored | Stored total ₱75, stock 7, authenticated seller | Pass |
 | Insufficient sale | Qty 8 with stock 7 must leave both tables unchanged | No sale; stock remained 7 | Pass |
@@ -32,7 +35,7 @@ Run date: 2026-11-26 (Asia/Manila)
 | Authenticated HTTP smoke | Real local server/login cookie; dashboard/products/sales return 200 | Seeded product and dashboard content rendered; no-store header present | Pass |
 | CSRF over real HTTP | Authenticated POST from an untrusted origin with no token; no mutation | HTTP 419; product count stayed 10 | Pass |
 | Concurrent InnoDB sale | Two separate PHP processes each request 4 units from MariaDB stock 5 | One success, one rejection, one sale row, final stock 1; fixture removed | Pass |
-| Real browser visual/mobile | Desktop/mobile keyboard and upload flows in supported browsers | Responsive implementation exists; manual multi-browser inspection not executed | Pending |
+| Real browser visual/mobile | Desktop hero rendered in headless Edge; mobile/keyboard/upload flows in supported browsers | Desktop hero visually inspected; full manual multi-browser pass not executed | Pending |
 | Hosted verification | Core flows on the actual HTTPS deployment | No hosting account/URL supplied | Pending |
 | GitHub repository | Reviewed commit pushed to an assessor-accessible repo | No Git/GitHub credentials or destination supplied | Pending |
 

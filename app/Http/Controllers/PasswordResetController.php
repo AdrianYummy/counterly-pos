@@ -23,9 +23,25 @@ class PasswordResetController extends Controller
         $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
         $data = $request->validate(['email' => ['required', 'email:rfc', 'max:150']]);
 
-        Password::sendResetLink($data);
+        $previewUrl = null;
 
-        return back()->with('success', 'If that email belongs to a staff account, a password-reset link has been sent.');
+        try {
+            Password::sendResetLink($data, function (User $user, string $token) use (&$previewUrl) {
+                $user->sendPasswordResetNotification($token);
+
+                if (config('counterly.mail_preview') && config('mail.default') === 'log') {
+                    $previewUrl = route('password.reset', ['token' => $token, 'email' => $user->email]);
+                }
+            });
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()->with('warning', 'The mail service is not configured correctly. Your administrator should verify the SMTP settings.');
+        }
+
+        return back()
+            ->with('success', 'If that email belongs to a staff account, a password-reset link has been sent.')
+            ->with('reset_preview_url', $previewUrl);
     }
 
     public function reset(Request $request, string $token): View

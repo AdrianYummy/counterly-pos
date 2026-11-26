@@ -27,8 +27,8 @@ class DatabaseSeeder extends Seeder
         }
 
         foreach ([
-            ['username' => 'admin', 'email' => 'admin@counterly.test', 'full_name' => 'Alex Rivera', 'role' => 'admin'],
-            ['username' => 'cashier', 'email' => 'cashier@counterly.test', 'full_name' => 'Jamie Santos', 'role' => 'cashier'],
+            ['username' => 'admin', 'email' => 'admin@cafeflow.test', 'full_name' => 'Alex Rivera', 'role' => 'admin'],
+            ['username' => 'cashier', 'email' => 'cashier@cafeflow.test', 'full_name' => 'Jamie Santos', 'role' => 'cashier'],
         ] as $staff) {
             User::updateOrCreate(['username' => $staff['username']], $staff + ['password' => Hash::make($password), 'avatar' => null]);
         }

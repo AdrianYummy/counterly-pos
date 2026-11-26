@@ -18,8 +18,8 @@ return new class extends Migration
             $base = Str::lower((string) preg_replace('/[^A-Za-z0-9._-]/', '', $user->username)) ?: 'staff';
             DB::table('users')->where('id', $user->id)->update([
                 'email' => in_array($user->username, ['admin', 'cashier'], true)
-                    ? $user->username.'@counterly.test'
-                    : $base.'.'.$user->id.'@counterly.test',
+                    ? $user->username.'@cafeflow.test'
+                    : $base.'.'.$user->id.'@cafeflow.test',
             ]);
         });
 

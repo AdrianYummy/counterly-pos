@@ -15,9 +15,9 @@ class ResetStaffPassword extends ResetPassword
         ], false));
 
         return (new MailMessage)
-            ->subject('Reset your Counterly password')
+            ->subject('Reset your CaféFlow password')
             ->greeting('Hello '.$notifiable->full_name.',')
-            ->line('We received a request to reset the password for your Counterly staff account.')
+            ->line('We received a request to reset the password for your CaféFlow staff account.')
             ->action('Reset password', $url)
             ->line('This link expires in '.config('auth.passwords.users.expire').' minutes.')
             ->line('If you did not request a reset, no action is needed.');

@@ -1,6 +1,6 @@
-# Counterly POS
+# CaféFlow
 
-Counterly is a complete Laravel point-of-sale project for IT0049. It manages products, customers, staff accounts, inventory-backed single-product sales, and read-only transaction history through an authenticated, responsive interface.
+CaféFlow is a complete Laravel point-of-sale project for IT0049, designed for a modern café with drinks, food, packaged coffee, merchandise, and seasonal gifts. It manages products, customers, staff accounts, inventory-backed single-product sales, and read-only transaction history through an authenticated, responsive interface.
 
 ## Submission details
 
@@ -22,6 +22,7 @@ Counterly is a complete Laravel point-of-sale project for IT0049. It manages pro
 - Record Sale flow with an optional customer, server-selected staff identity, exact centavo totals, database transaction, `lockForUpdate()`, stock deduction, insufficient-stock rejection, and overflow protection
 - Read-only sales history with search, product/staff/date filters and transaction details
 - Optional customer receipt email after checkout, receipt resend from transaction details, and a print-ready receipt
+- Public CaféFlow landing page, clickable café emblem, persistent light/dark themes, collapsible navigation, refined loading feedback, and reduced-motion support
 - Stale-stock detection so an open product edit cannot undo a newer sale
 - Restrictive foreign keys; transaction history blocks deletion of referenced products, customers, or staff
 - Current-account, final-staff, and final-administrator safeguards
@@ -79,17 +80,18 @@ Required PHP extensions include Ctype, cURL, DOM, Fileinfo, Filter, GD, Hash, Mb
 
    New passwords require 10–72 characters with uppercase, lowercase, number, and symbol characters.
 
-6. Email is safe to test locally with `MAIL_MAILER=log`; messages appear in `storage/logs/laravel.log`. For real inbox delivery, configure SMTP credentials in `.env`:
+6. Email is safe to test locally with `MAIL_MAILER=log`; messages appear in `storage/logs/laravel.log`, and `MAIL_PREVIEW_LINK=true` displays a local reset link after a valid request. For real inbox delivery, configure SMTP credentials in `.env` and set `MAIL_PREVIEW_LINK=false`:
 
    ```dotenv
    MAIL_MAILER=smtp
+   MAIL_PREVIEW_LINK=false
    MAIL_HOST=your-smtp-host
    MAIL_PORT=587
    MAIL_USERNAME=your-smtp-username
    MAIL_PASSWORD=your-private-smtp-password
    MAIL_SCHEME=null
    MAIL_FROM_ADDRESS=noreply@your-domain.example
-   MAIL_FROM_NAME="Counterly POS"
+   MAIL_FROM_NAME="CaféFlow"
    ```
 
 7. Install/build assets, migrate, seed, and expose prepared uploads:
@@ -110,7 +112,7 @@ Required PHP extensions include Ctype, cURL, DOM, Fileinfo, Filter, GD, Hash, Mb
 
    Open `http://127.0.0.1:8000`. For source asset hot reload, run `npm run dev` in a second terminal. A production build is already included under `public/build`.
 
-Seeded usernames are `admin` and `cashier`, with placeholder recovery addresses `admin@counterly.test` and `cashier@counterly.test`. Both use the password set in `DEMO_STAFF_PASSWORD`. Replace the placeholder addresses in **User Accounts** before testing real password delivery. Change assessor credentials through a private submission channel—never commit a real password. The seeder uses stable usernames/emails and can be rerun without silently duplicating demo records, but it must not be run automatically on production redeployments.
+Seeded usernames are `admin` and `cashier`, with placeholder recovery addresses `admin@cafeflow.test` and `cashier@cafeflow.test`. Both use the password set in `DEMO_STAFF_PASSWORD`. Replace the placeholder addresses in **User Accounts** before testing real password delivery. Change assessor credentials through a private submission channel—never commit a real password. The seeder uses stable usernames/emails and can be rerun without silently duplicating demo records, but it must not be run automatically on production redeployments.
 
 ## Design and security notes
 
@@ -131,7 +133,7 @@ composer check-platform-reqs
 npm run build
 ```
 
-The latest local run passed **25 tests / 134 assertions**, the Vite production build, Composer platform checks, MariaDB migrations/seeders, and authenticated HTTP smoke checks. See [docs/TESTING.md](docs/TESTING.md) for executed versus pending checks.
+The latest local run passed **28 tests / 141 assertions**, the Vite production build, Composer platform checks, MariaDB migrations/seeders, and authenticated HTTP smoke checks. See [docs/TESTING.md](docs/TESTING.md) for executed versus pending checks.
 
 Additional guides:
 
