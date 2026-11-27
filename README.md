@@ -54,7 +54,7 @@ Required PHP extensions include Ctype, cURL, DOM, Fileinfo, Filter, GD, Hash, Mb
 2. Create an empty database:
 
    ```sql
-   CREATE DATABASE counterly_pos CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE DATABASE cafeflow_pos CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
 
 3. From this project folder, install dependencies and create local settings:

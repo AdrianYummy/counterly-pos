@@ -6,7 +6,7 @@ Run date: 2026-11-26 (Asia/Manila)
 | --- | --- | --- | --- |
 | Framework routes | `php artisan route:list`; management routes must use auth group | 38 expected application/framework routes listed; required resources present | Pass |
 | Automated suite | In-memory SQLite isolation; no development/production records | 41 tests, 280 assertions | Pass |
-| MariaDB install | Existing `counterly_pos` on MariaDB 10.4.32; apply migrations | Users received recovery emails; password token table created; existing data preserved | Pass |
+| MariaDB install | Existing `cafeflow_pos` on MariaDB 10.4.32; apply migrations | Users received recovery emails; password token table created; existing data preserved | Pass |
 | Logged-out access | GET and POST management requests must not mutate data | Feature test redirects both and confirms no inserted product | Pass |
 | Login/logout | Correct username works; wrong password fails; logout clears auth | Automated feature test passed | Pass |
 | Session auto-logout | Expired activity, missing heartbeat, immediate logout, pending tab close, refresh resume (both request orders), and authenticated browser hooks | Server invalidated expired/closed sessions; refresh cancelled its matching close token; heartbeat/activity refreshed live sessions | Pass |
