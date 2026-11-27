@@ -1,6 +1,6 @@
 <div class="form-grid">
     <div class="media-editor span-2">
-        <div class="image-preview product-upload-preview"><img id="product-preview" src="{{ isset($product) && $product->image ? asset('storage/'.$product->image) : asset('images/product-placeholder.svg') }}" alt="Product image preview"></div>
+        <div class="image-preview product-upload-preview"><img id="product-preview" src="{{ isset($product) && $product->image ? route('media.show', ['path' => $product->image]) : asset('images/product-placeholder.svg') }}" alt="Product image preview"></div>
         <div class="media-editor-body">
             <p class="eyebrow">Product photo</p>
             <h3>{{ isset($product) ? 'Update the product image' : 'Add a product image' }}</h3>

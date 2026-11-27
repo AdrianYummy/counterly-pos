@@ -54,12 +54,12 @@
                             data-name="{{ $product->name }}"
                             data-price="{{ $product->price }}"
                             data-stock="{{ $product->stock_quantity }}"
-                            data-image="{{ $product->image ? asset('storage/'.$product->image) : asset('images/product-placeholder.svg') }}"
+                            data-image="{{ $product->image ? route('media.show', ['path' => $product->image]) : asset('images/product-placeholder.svg') }}"
                             data-search-value="{{ mb_strtolower($product->name) }}"
                             data-initial-quantity="{{ $initialQuantity }}"
                             aria-pressed="{{ $initialQuantity ? 'true' : 'false' }}"
                         >
-                            <img src="{{ $product->image ? asset('storage/'.$product->image) : asset('images/product-placeholder.svg') }}" alt="">
+                            <img src="{{ $product->image ? route('media.show', ['path' => $product->image]) : asset('images/product-placeholder.svg') }}" alt="">
                             <span class="product-tile-body">
                                 <strong>{{ $product->name }}</strong>
                                 <span class="product-meta"><b>₱{{ number_format((float) $product->price, 2) }}</b><small>{{ number_format($product->stock_quantity) }} in stock</small></span>

@@ -38,7 +38,7 @@
             <div class="topbar-tools">
                 <button class="icon-button theme-toggle" type="button" aria-label="Switch to dark mode" title="Toggle dark mode" data-theme-toggle><x-icon name="moon" class="theme-moon"/><x-icon name="sun" class="theme-sun"/><span>Theme</span></button>
                 <div class="account-menu">
-                    <img src="{{ auth()->user()->avatar ? asset('storage/'.auth()->user()->avatar) : asset('images/avatar-placeholder.svg') }}" alt="{{ auth()->user()->full_name }} avatar">
+                    <img src="{{ auth()->user()->avatar ? route('media.show', ['path' => auth()->user()->avatar]) : asset('images/avatar-placeholder.svg') }}" alt="{{ auth()->user()->full_name }} avatar">
                     <div><strong>{{ auth()->user()->full_name }}</strong><small>{{ ucfirst(auth()->user()->role) }} · {{ '@'.auth()->user()->username }}</small></div>
                     <form method="POST" action="{{ route('logout') }}" data-confirm="Sign out of CaféFlow? Any unsaved form changes will be lost.">@csrf<button class="link-button" type="submit"><x-icon name="logout"/>Sign out</button></form>
                 </div>

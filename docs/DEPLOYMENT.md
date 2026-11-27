@@ -13,13 +13,12 @@ Use a PHP host with PHP 8.2+, the Laravel extensions listed in the README, MySQL
    npm ci
    npm run build
    php artisan migrate --force
-   php artisan storage:link
    php artisan optimize
    ```
 
    If the host has no Node.js, upload the committed `public/build` from the reviewed commit.
 
-4. Give the web process write access to `storage` and `bootstrap/cache`. Keep `.env`, source, vendor metadata, and storage internals outside public access. Persist `storage/app/public` and `storage/framework/sessions` across deployments.
+4. Give the web process write access to `storage` and `bootstrap/cache`. Keep `.env`, source, vendor metadata, and storage internals outside public access. Persist `storage/app/public` and `storage/framework/sessions` across deployments. CaféFlow serves authenticated product images and staff avatars through its `/media` route, so hosts without SSH or symbolic-link support do not require `php artisan storage:link`.
 5. Seed only a new demo environment deliberately. Never run `migrate:fresh`, destructive resets, or automatic demo seeding against existing/production data.
 6. Verify on the real HTTPS URL: login/logout, direct-route protection, all CRUD, image upload/display after redeploy, named/walk-in sale, insufficient stock, history, secure cookies, and production assets without a Vite dev server.
 7. Put the real repository URL, live URL, and deployed commit in the README and testing record. Supply passwords privately.

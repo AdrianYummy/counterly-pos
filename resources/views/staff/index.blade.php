@@ -19,7 +19,7 @@
             <div class="table-wrap"><table><thead><tr><th>Staff member</th><th>Sign-in details</th><th>Role</th><th>Status</th><th>Created</th><th class="actions-cell">Actions</th></tr></thead><tbody>
             @foreach($staffMembers as $staff)
                 <tr>
-                    <td><div class="media-cell"><img class="round" src="{{ $staff->avatar ? asset('storage/'.$staff->avatar) : asset('images/avatar-placeholder.svg') }}" alt=""><strong>{{ $staff->full_name }} @if(auth()->user()->is($staff))<small class="you-label">Current account</small>@endif</strong></div></td>
+                    <td><div class="media-cell"><img class="round" src="{{ $staff->avatar ? route('media.show', ['path' => $staff->avatar]) : asset('images/avatar-placeholder.svg') }}" alt=""><strong>{{ $staff->full_name }} @if(auth()->user()->is($staff))<small class="you-label">Current account</small>@endif</strong></div></td>
                     <td>{{ '@'.$staff->username }}<small>{{ $staff->email }}</small></td>
                     <td><span class="badge {{ $staff->isAdmin() ? 'success' : 'warning' }}">{{ $staff->isAdmin() ? 'Administrator' : 'Cashier' }}</span></td>
                     <td><span class="badge success">Active</span></td>

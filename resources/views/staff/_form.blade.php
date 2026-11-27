@@ -1,6 +1,6 @@
 <div class="form-grid">
     <div class="media-editor avatar-editor span-2">
-        <div class="image-preview avatar"><img id="avatar-preview" src="{{ isset($staff) && $staff->avatar ? asset('storage/'.$staff->avatar) : asset('images/avatar-placeholder.svg') }}" alt="Avatar preview"></div>
+        <div class="image-preview avatar"><img id="avatar-preview" src="{{ isset($staff) && $staff->avatar ? route('media.show', ['path' => $staff->avatar]) : asset('images/avatar-placeholder.svg') }}" alt="Avatar preview"></div>
         <div class="media-editor-body">
             <p class="eyebrow">Profile photo</p>
             <h3>{{ isset($staff) ? 'Update the staff avatar' : 'Add a staff avatar' }}</h3>
